@@ -23,7 +23,7 @@ data("peerj32")
 peerj32 <- peerj32$phyloseq
 
 #UI#
-ui <- navbarPage("meta-shiny v.0.0.0.1", fluid = TRUE,
+ui <- navbarPage("meta-shiny v.0.0.0.2", fluid = TRUE,
                  
                  theme = shinytheme("superhero"),
                  
@@ -79,7 +79,7 @@ ui <- navbarPage("meta-shiny v.0.0.0.1", fluid = TRUE,
                  ),
                  tabPanel("Beta Diversity",
                           fluidPage(
-                            titlePanel("Beta Diversity", windowTitle = "meta-shiny v.0.0.0.1"),
+                            titlePanel("Beta Diversity", windowTitle = "meta-shiny v.0.0.0.2"),
                             
                             #The sidebar
                             sidebarPanel(
@@ -134,7 +134,7 @@ ui <- navbarPage("meta-shiny v.0.0.0.1", fluid = TRUE,
                  tabPanel("Community Composition",
                           
                           fluidPage(
-                            titlePanel("Community Composition", windowTitle = "meta-shiny v.0.0.0.1"),
+                            titlePanel("Community Composition", windowTitle = "meta-shiny v.0.0.0.2"),
                             
                             #The sidebar
                             sidebarPanel(
@@ -284,12 +284,12 @@ server <- shinyServer(function(input, output, session){
    # Microbial community composition #
    
    
-#   # 1 - Select the column -at least the Vs work
+#   # 1 - Select the column -at least the V inputs work
    datasetSubsetInput <- reactive({
-     subset1 <- prune_samples(sample_data(datasetInputComposition())$bmi_group == input$v1, datasetInputComposition())
-     subset1 <- prune_samples(sample_data(subset1)$nationality == input$v2, subset1)
-     subset1 <- prune_samples(sample_data(subset1)$timepoint.within.group == input$v3, subset1)
-     subset2 <- prune_samples(sample_data(subset1)$bmi_group == input$v1, subset1) %>% aggregate_taxa(level = input$v4)
+     subset1 <- prune_samples(sample_data(datasetInputComposition())[[input$z1]] == input$v1, datasetInputComposition())
+     subset1 <- prune_samples(sample_data(subset1)[[input$z2]] == input$v2, subset1)
+     subset1 <- prune_samples(sample_data(subset1)[[input$z3]] == input$v3, subset1)
+     subset2 <- prune_samples(sample_data(subset1)[[input$z1]] == input$v1, subset1) %>% aggregate_taxa(level = input$v4)
      microbiome::transform(subset2, "compositional")
   })
    
@@ -339,12 +339,12 @@ server <- shinyServer(function(input, output, session){
   
   # 6.1 - Also a heatmap, but averaged by group
   output$CommunityHeatmap2 <- renderPlot({ 
-    plot_composition(datasetSubsetInput(), average_by = "bmi_group")
+    plot_composition(datasetSubsetInput(), average_by = input$z1 )
   })
   
   # 7 - And top it off with a taxa prevalence plot
   output$communityPrevalence <- renderPlot({  
-    plot_taxa_prevalence(datasetSubsetInput(), "Phylum") #Can be changed to whatever taxonomic rank the input files have
+    plot_taxa_prevalence(datasetSubsetInput(), input$v4 ) #Can be changed to whatever taxonomic rank the input files have
   })
 })
 # Run the application 
