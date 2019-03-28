@@ -1,9 +1,7 @@
-#####################################################################################################
-# This Shiny web app is designed to work as a metagenomics pipeline                                 #
-# It is based, primarily, around the microbiome package                                             #
-# It was written while listening to Death Grips, the Sunless Skies OST, and Clair de Lune on a loop #
-# It would behoove you to go listen to those after you're done fiddling about with the app          #
-#####################################################################################################
+# meta-shiny: A Shiny R app for metagenomics analysis, built around the "microbiome" package
+# current version: v0.0.0.2
+# made while listening to Death Grips, Claude Debussy's Clair de Lune, the Sunless Skies OST and Holst's Planets Suite.
+# seriously go listen to all of that, it's good stuff
 
 # Load the required libraries
 library("shiny")
@@ -23,7 +21,7 @@ data("peerj32")
 peerj32 <- peerj32$phyloseq
 
 #UI#
-ui <- navbarPage("meta-shiny v.0.0.0.2", fluid = TRUE,
+ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                  
                  theme = shinytheme("superhero"),
                  
@@ -79,11 +77,11 @@ ui <- navbarPage("meta-shiny v.0.0.0.2", fluid = TRUE,
                  ),
                  tabPanel("Beta Diversity",
                           fluidPage(
-                            titlePanel("Beta Diversity", windowTitle = "meta-shiny v.0.0.0.2"),
+                            titlePanel("Beta Diversity", windowTitle = "meta-shiny v0.0.0.2"),
                             
                             #The sidebar
                             sidebarPanel(
-                              selectInput("dataset","Choose the dataset to analyze.", #Bug where selections shared with Alpha Div. rely on Alpha's setting to function
+                              selectInput("datasetBeta","Choose the dataset to analyze.", #Bug where selections shared with Alpha Div. rely on Alpha's setting to function
                                           choices = c("dietswap","atlas1006","peerj32")),
                               
                               numericInput("beta.sneed","Set seed for outcome replication:",
@@ -134,22 +132,22 @@ ui <- navbarPage("meta-shiny v.0.0.0.2", fluid = TRUE,
                  tabPanel("Community Composition",
                           
                           fluidPage(
-                            titlePanel("Community Composition", windowTitle = "meta-shiny v.0.0.0.2"),
+                            titlePanel("Community Composition", windowTitle = "meta-shiny v0.0.0.2"),
                             
                             #The sidebar
                             sidebarPanel(
-                              selectInput("datasetComp","Choose the dataset to analyze.", #Bug where selections shared with Alpha Div. rely on Alpha's setting to function
+                              selectInput("datasetComp","Choose the dataset to analyze.",
                                           choices = c("dietswap","atlas1006","peerj32")),
                               selectInput("z1", "Choose a metadata column:", # For subsetting data, #1
-                                          choices=as.vector(colnames(testies)), selected = "bmi_group"),
+                                          choices=colnames(testies), selected = "bmi_group"),
                               selectInput("v1", "Choose a metadata value:", # For subsetting data, metadata value
                                           choices=sapply(testies, levels), selected = "lean"),
                               selectInput("z2", "Choose a seocond metadata column:", # For subsetting data, #2
-                                          choices=as.character(colnames(testies)), selected = "nationality"),
+                                          choices=colnames(testies), selected = "nationality"),
                               selectInput("v2", "Choose a second metadata value:", # For subsetting data, metadata #2 value
                                           choices=sapply(testies, levels), selected = "AAM"),
                               selectInput("z3", "Choose the intended timepoint:", # For subsetting data, timepoint data
-                                          choices=as.character(colnames(testies)), selected = "timepoint.within.group"),
+                                          choices=colnames(testies), selected = "timepoint.within.group"),
                               selectInput("v3", "Choose a timepoint value:", # For subsetting data, timepoint data value
                                           choices=c("0","1","2","3","4","5","6","7","8","9","10"), selected = "1"),
                               selectInput("v4", "Choose a taxonomy rank:", # Tax rank to analyze
@@ -169,11 +167,12 @@ ui <- navbarPage("meta-shiny v.0.0.0.2", fluid = TRUE,
                               br(),
                               plotOutput("CommunityHeatmap2"), #Working
                               br(),
-                              plotOutput("communityPrevalence"), #Kind of working
+                              plotOutput("communityPrevalence"), #Working
                               verbatimTextOutput("datasetAggregateTable")
                             )
                           )
                  )
+              
 )
 
 #SERVER#
@@ -181,7 +180,7 @@ server <- shinyServer(function(input, output, session){
   
   
   # Pick the dataset
-  datasetInput <- reactive({
+  datasetInput <- reactive({ #For alpha diversity
     switch(input$dataset,
            "dietswap" = dietswap,
            "atlas1006" = atlas1006,
@@ -189,21 +188,72 @@ server <- shinyServer(function(input, output, session){
           )
   })
   
-  datasetInputComposition <- reactive({
-    switch(input$datasetComp,
+  datasetInputBeta <- reactive({ #For beta diversity
+    switch(input$datasetBeta,
            "dietswap" = dietswap,
            "atlas1006" = atlas1006,
            "peerj32" = peerj32
     )
   })
   
+  datasetInputComposition <- reactive({ #For CC
+    switch(input$datasetComp,
+           "dietswap" = dietswap,
+           "atlas1006" = atlas1006,
+           "peerj32" = peerj32
+    )
+  })
 
   # Metadata
   output$testies <- renderTable({
     meta(datasetInput())
   })
   
-  #Merges the alpha diversity table and the metadata of the dataset into one big table.
+  
+  #Updating SelectInputs when swapping datasets - Alpha Diversity
+  observe({
+      updateSelectInput(session, "x",
+                        choices=colnames(meta(datasetInput())))
+      updateSelectInput(session, "y",
+                      choices=colnames(alpha(datasetInput())))
+  })
+  
+  #Updating SelectInputs when swapping datasets - Beta Diversity
+  observe({
+    updateSelectInput(session, "xb",
+                      choices=colnames(meta(datasetInputBeta())))
+    updateSelectInput(session, "xc",
+                      choices=colnames(meta(datasetInputBeta())))
+  })
+  
+  #Updating selectInputs when swapping datasets - Community Composition Analysis
+  observe({
+    updateSelectInput(session, "z1",
+                      choices=colnames(meta(datasetInputComposition())))
+    updateSelectInput(session, "z2",
+                      choices=colnames(meta(datasetInputComposition())))
+    updateSelectInput(session, "z3",
+                      choices=colnames(meta(datasetInputComposition())))
+    updateSelectInput(session, "v4",
+                      choices=colnames(tax_table(datasetInputComposition())))
+    })
+  
+  #Update metadata value selectInputs for CC Analysis
+  observeEvent(input$z1,{
+    updateSelectInput(session, "v1",
+                      choices=(sample_data(datasetInputComposition())[[input$z1]]))
+  })
+  observeEvent(input$z2,{
+    updateSelectInput(session, "v2",
+                      choices=(sample_data(datasetInputComposition())[[input$z2]]))
+  })
+  observeEvent(input$z3,{
+    updateSelectInput(session, "v3",
+                      choices=(sample_data(datasetInputComposition())[[input$z3]]))
+  })
+  
+  
+  #Merges the alpha diversity table and the metadata of the dataset into one big table. 
   output$summary <- renderPrint({
     summarize_phyloseq(datasetInput())
   })
@@ -284,7 +334,7 @@ server <- shinyServer(function(input, output, session){
    # Microbial community composition #
    
    
-#   # 1 - Select the column -at least the V inputs work
+#   # 1 - Sebolect the column -at least the V inputs work -working fine now
    datasetSubsetInput <- reactive({
      subset1 <- prune_samples(sample_data(datasetInputComposition())[[input$z1]] == input$v1, datasetInputComposition())
      subset1 <- prune_samples(sample_data(subset1)[[input$z2]] == input$v2, subset1)
@@ -293,24 +343,11 @@ server <- shinyServer(function(input, output, session){
      microbiome::transform(subset2, "compositional")
   })
    
-  # # 1 - Select the column
-  # datasetSubsetInput <- reactive({
-  #   subset1 <- subset_samples(datasetInputComposition(), bmi_group == "obese" & nationality == "AAM" & timepoint.within.group == "1") %>% microbiome::transform(transform = "compositional")
-  #   subset2 <- subset_samples(subset1, bmi_group == "obese") %>% aggregate_taxa(level = input$v4)
-  #   microbiome::transform(subset2, "compositional")
-  #   #Very important bug: inputs aren't recognized because of subset_samples.
-  # }) 
-   
-   output$datasetSubsetTable <- renderText({
-      summarize_phyloseq(datasetSubsetInput())
-      summarize_phyloseq(dietswap)
-   })
-   
    # 3 - Make plot
   output$communityPlot <- renderPlot ({
     theme_set(theme_bw(21))
-    datasetSubsetInput() %>% plot_composition(sample.sort = "Firmicutes", otu.sort = "abundance") +
-    scale_fill_manual(values = default_colors(input$v4)[taxa(datasetSubsetInput())]) 
+    datasetSubsetInput() %>% plot_composition(sample.sort = "Bacteroidetes", otu.sort = "abundance") +
+    scale_fill_manual(values = default_colors("Phylum")[taxa(datasetSubsetInput())]) 
   }) #otu.sort and and sample.sort need to be selectable
   
    # 4 - Make more plot
@@ -337,7 +374,7 @@ server <- shinyServer(function(input, output, session){
                         otu.sort = "neatmap")
   })
   
-  # 6.1 - Also a heatmap, but averaged by group
+  # 6.1 - Also a heatmap, but averaged by z1 group - replace with user pick later
   output$CommunityHeatmap2 <- renderPlot({ 
     plot_composition(datasetSubsetInput(), average_by = input$z1 )
   })
@@ -350,52 +387,3 @@ server <- shinyServer(function(input, output, session){
 # Run the application 
 
 shinyApp(ui = ui, server = server)
-
-
-#Microbiome Composition#
-#Sample subset
-#micro_composition <- subset_samples(alpha0, group == "DI" & nationality == "AFR" & timepoint.within.group == 1)
-
-#data(dietswap)
-#pseq3 <- dietswap %>% subset_samples(nationality == "AFR") %>% aggregate_taxa(level = "Phylum") %>%  microbiome::transform(transform = "compositional")
-
-#Compositional barplot of analyzed data
-#theme_set(theme_bw(21))
-#p <- pseq3 %>% plot_composition(sample.sort = "Firmicutes", otu.sort = "abundance") +
-  
-#  # Set custom colors
-#  scale_fill_manual(values = default_colors("Phylum")[taxa(pseq3)]) 
-
-#Take a guess
-#print(p)
-
-# Limit the analysis on core taxa and specific sample group
-#q <- plot_composition(alpha0,
-#                      taxonomic.level = "Genus",
-#                      sample.sort = "nationality",
-#                      x.label = "nationality") +
-#  guides(fill = guide_legend(ncol = 1)) +
-#  scale_y_percent() +
-#  labs(x = "Samples", y = "Relative abundance (%)",
-#       title = "Relative abundance data",
-#       subtitle = "Subtitle",
-#       caption = "Caption text.") + 
- # theme_ipsum(grid="Y")
-#print(q)  
-
-
-# Averaged by group
-#s <- plot_composition(alpha0,
-#                      average_by = "bmi_group", transform = "compositional")
-#s <- plot_composition(microbiome::transform(pseq, "compositional"),
-#                      plot.type = "heatmap",
-#                      sample.sort = "neatmap",
-#                      otu.sort = "neatmap")
-#print(s)
-
-#Composition heatmap
-#t <- plot_composition(microbiome::transform(pseq3, "compositional"),
-#                      plot.type = "heatmap",
-#                      sample.sort = "neatmap",
-#                      otu.sort = "neatmap")
-#print(t)
