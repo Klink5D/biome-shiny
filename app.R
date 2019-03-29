@@ -124,14 +124,13 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                                           choices=colnames(testies), selected = "bmi_group"),
                               
                               selectInput("xd", "For metadata/tax rank split plot, choose a taxonomy rank:", 
-                                          choices=c("Phylum", "Class", "Order", "Family","Genus")), # Needs to be able to populate the choices with
-                              # a list obtained from database's colnames(tax_table())
+                                          choices=c("Phylum", "Class", "Order", "Family","Genus")),
                               
                               selectInput("ordinate.method", "Choose an ordination method:", 
                                           choices=c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"), selected = "CCA"),
                               
                               selectInput("ordinate.distance", "Choose a distance method:", 
-                                          choices=c("bray","jaccard","unifrac"), selected = "unifrac"), #There's like 40 of these things. I could add them all, but...
+                                          choices=c("bray","jaccard","unifrac"), selected = "unifrac"), #There's 44 of these in total
                               
                               sliderInput("geom.size", "Plot geometry point size:", 
                                           min = 1, max = 10, step = 0.5, value = "3"),
@@ -147,17 +146,18 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                               
                               textOutput("betaseed"),
                               
-                              plotOutput("ordinatePlot", hover = "plot_hover"),
+                              tabsetPanel(
+                              tabPanel( title = "Ordination Plot", 
+                                        plotOutput("ordinatePlot", hover = "plot_hover")),
                               
-                              br(),
+                              tabPanel( title = "Split Ordination Plot (Metadata/Metadata)", 
+                                        plotOutput("metaMetaSplitOrd", hover = "plot_hover_split")),
                               
-                              plotOutput("metaMetaSplitOrd", hover = "plot_hover_split"),
-                              
-                              br(),
-                              
-                              plotOutput("metaTaxSplitOrd", hover = "plot_hover_split_tax")
+                              tabPanel( title = "Taxa Plot",
+                                        plotOutput("metaTaxSplitOrd", hover = "plot_hover_split_tax"))
                             )
                           )
+                        )
                  ),
                  tabPanel("Community Composition",
                           
@@ -191,14 +191,19 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                             ),
                             
                             mainPanel(
-                              plotOutput("communityPlot"), #Working
-                              br(),
-                              plotOutput("communityPlotGenus"), #Working
-                              br(),
-                              plotOutput("CommunityHeatmap2"), #Working
-                              br(),
-                              plotOutput("communityPrevalence"), #Working
-                              verbatimTextOutput("datasetAggregateTable")
+                            tabsetPanel(
+                              tabPanel( title = "Abundance in samples by taxa",
+                              plotOutput("communityPlot")
+                              ),
+                              tabPanel(title = "Relative abundance",
+                              plotOutput("communityPlotGenus") 
+                              ),
+                              tabPanel(title = "Community Plot #3",
+                              plotOutput("CommunityHeatmap2") 
+                              ),
+                              tabPanel(title = "Taxonomy Prevalence Plot",
+                              plotOutput("communityPrevalence")) 
+                            )
                             )
                           )
                  )
@@ -367,7 +372,7 @@ server <- shinyServer(function(input, output, session){
      plot_ordination(datasetInput(), ordinateData(), color = input$xb ) + geom_point(size = input$geom.size)
    })
 
-   # 5 - Make split plots as well, available as metadata/metadata and metadata/taxonomy level (very fun part)
+   # 5 - Make split plots as well, available as metadata/metadata and metadata/taxonomy level
    # Meta/Meta
    output$metaMetaSplitOrd <- renderPlot({
       plot_ordination(datasetInput(), ordinateData(), type = "split", shape = input$xb, color = input$xc, label = input$xb)
@@ -377,10 +382,9 @@ server <- shinyServer(function(input, output, session){
      plot_ordination(datasetInput(), ordinateData(), type = "taxa", color = input$xd, label = input$xb)
    })
    
+   
    # Microbial community composition #
-   
-   
-#   # 1 - Sebolect the column -at least the V inputs work -working fine now
+   # 1 - Sebolect the column 
    datasetSubsetInput <- reactive({
      subset1 <- prune_samples(sample_data(datasetInputComposition())[[input$z1]] == input$v1, datasetInputComposition())
      subset1 <- prune_samples(sample_data(subset1)[[input$z2]] == input$v2, subset1)
@@ -389,14 +393,15 @@ server <- shinyServer(function(input, output, session){
      microbiome::transform(subset2, "compositional")
   })
    
-   # 3 - Make plot
+   
+   # 3.1 - Make plots
   output$communityPlot <- renderPlot ({
     theme_set(theme_bw(21))
     datasetSubsetInput() %>% plot_composition(sample.sort = "Bacteroidetes", otu.sort = "abundance") +
     scale_fill_manual(values = default_colors("Phylum")[taxa(datasetSubsetInput())]) 
   }) #otu.sort and and sample.sort need to be selectable
   
-   # 4 - Make more plot
+   # 3.2 - Make plot
   output$communityPlotGenus <- renderPlot({
   plot_composition(datasetSubsetInput(),
                         taxonomic.level = "Genus",
@@ -411,7 +416,7 @@ server <- shinyServer(function(input, output, session){
    theme_ipsum(grid="Y")
    })
   
-  # 6 - Make a heatmap too
+  # 3.3 - Make a heatmap too
   
   #Composition heatmap
   output$communityHeatmap <- renderPlot({ plot_composition(datasetSubsetInput(),
@@ -420,7 +425,7 @@ server <- shinyServer(function(input, output, session){
                         otu.sort = "neatmap")
   })
   
-  # 6.1 - Also a heatmap, but averaged by z1 group - replace with user pick later
+  # 3.4 - Also a heatmap, but averaged by z1 group - replace with user pick later
   output$CommunityHeatmap2 <- renderPlot({ 
     plot_composition(datasetSubsetInput(), average_by = input$z1 )
   })
