@@ -1,7 +1,12 @@
 # meta-shiny: A Shiny R app for metagenomics analysis, built around the "microbiome" package
 # current version: v0.0.0.2
-# made while listening to Death Grips, Claude Debussy's Clair de Lune, the Sunless Skies OST and Holst's Planets Suite.
-# seriously go listen to all of that, it's good stuff
+
+#Considerations: modal dialog to fullscreen plots on click/download plots
+#                Separate plots into different tabs, along with the sidebar choices you need to generate said plots
+#                File input that takes in a BIOM/Mothur/QIIME file and loads it as the active dataset
+#                Log that dumps the code running in the background to a text file
+#                Also a report function that dumps all plots, summaries and so on onto an HTML page or PDF/word document file.
+
 
 # Load the required libraries
 library("shiny")
@@ -13,6 +18,8 @@ library("ggpubr")
 library("ggplot2")
 library("hrbrthemes")
 library("reshape2")
+library("DT")
+library("randomcoloR")
 
 #load the example datasets
 data("dietswap")
@@ -23,35 +30,49 @@ peerj32 <- peerj32$phyloseq
 #UI#
 ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                  
-                 theme = shinytheme("superhero"),
+                 theme = shinytheme("united"),
+                 
+                 tabPanel("Introduction",
+                          titlePanel("Welcome to meta-shiny", windowTitle = "meta-shiny v0.0.2"),
+                          
+                          sidebarPanel(
+                            fileInput("datase", "Please upload a dataset (BIOM, QIIME or MOTHUR file).",
+                                      multiple = FALSE,
+                                      accept = c("text/csv",
+                                                 "text/comma-separated-values,text/plain",
+                                                 ".csv")),
+                            
+                            
+                            h5("Made with ",
+                               img(src = "shiny.png", height = "50"), "for ", img(src = "biodata.png", height = "30"))
+                          ),
+                          
+                          mainPanel(
+                            verbatimTextOutput("introText")
+                          )
+                   ),
                  
                  tabPanel( "Alpha Diversity",
-                           #Page theme. Could add a selector to the sidebar instead, but for now, you get a dark theme and you'll like it.
-                           #Take a guess
-                           titlePanel("Alpha Diversity", windowTitle = "meta-shiny v.0.0.0.0«1"),
-                           
+                           titlePanel("Alpha Diversity", windowTitle = "meta-shiny v0.0.0.2"), 
+
                            #The sidebar
                            sidebarPanel(
                              selectInput("dataset","Choose the dataset to analyze.",
                                          choices = c("dietswap","atlas1006","peerj32")),
-                             numericInput("obs", paste("Number of samples to view"), 10, 1, 222),
-                             
-                             #X (the metadata) and Y (the diversity measure)
+                            # #X (the metadata) and Y (the diversity measure)
                              selectInput("x", "Choose a metadata column:", 
                                          choices=colnames(testies)),
                              selectInput("y", "Choose a diversity measure:", 
                                          choices=colnames(testies)),
-                             ##And the fill (also metadata)
-                             # selectInput("fill", "Metadata for the color fill:", 
-                             #            choices=colnames(testies)),
-                             
-                             #Needs a sort by panel - with subset_samples
+                            ##And the fill (also metadata)
+                             selectInput("fill", "Metadata for the color fill:", 
+                                        choices=colnames(testies)),
                              
                              #Linebreaks
                              br(),
                              
-                             h5("Made by ya boi Bobo", #This'll get replaced with a proper logo.
-                                img(src = "bobo.png", height = "100"))
+                             h5("Made with ",
+                                img(src = "shiny.png", height = "50"), "for ", img(src = "biodata.png", height = "30"))
                            ),
                            
                            mainPanel(
@@ -60,17 +81,26 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                                           
                                           # Tab 1: Phyloseq summary
                                           tabPanel( title = "Phyloseq Summary",
-                                                    textOutput("summary")
+                                                    verbatimTextOutput("summary")
                                           ),
                                           
                                           # Tab 2: Alpha diversity measures with metadata
                                           tabPanel( title = "Table",
-                                                    tableOutput("view")
+                                                    DT::dataTableOutput("view")
                                           ),
                                           
                                           # Tab 3: The exceptionally lewd Violin Plots
-                                          tabPanel( title = "Plot",
-                                                    plotOutput("alpha_graph")
+                                          tabPanel( title = "Violin Plot",
+                                                    plotOutput("violinPlot"),
+                                            sidebarPanel(
+                                            selectInput("x", "Choose a metadata column:", 
+                                                        choices=colnames(testies))
+                                          )                                          
+                                          ),
+                                          
+                                          # Tab 4: A phyloseq richness plot
+                                          tabPanel( title = "Richness Plot",
+                                                    plotOutput("richnessPlot")
                                           )
                              )
                            )
@@ -109,8 +139,8 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                               # Linebreaks
                               br(),
                               
-                              h5("Made by ya boi Bobo", #This'll get replaced with a proper logo.
-                                 img(src = "bobo.png", height = "100"))
+                              h5("Made with ",
+                                 img(src = "shiny.png", height = "50"), "for ", img(src = "biodata.png", height = "30"))
                             ),
                             
                             mainPanel(
@@ -156,8 +186,8 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                               
                               br(),
                               
-                              h5("Made by ya boi Bobo", #This'll get replaced with a proper logo.
-                                 img(src = "bobo.png", height = "100"))
+                              h5("Made with ",
+                                 img(src = "shiny.png", height = "50"), "for ", img(src = "biodata.png", height = "30"))
                             ),
                             
                             mainPanel(
@@ -178,8 +208,18 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
 #SERVER#
 server <- shinyServer(function(input, output, session){
   
+  #Introduction text
+  output$introText <- renderText({
+    paste0("Meta-shiny is a metagenomics pipeline developed with the Shiny library for R, and based, primarily, on the \"microbiome\" and \"phyloseq\" libraries for analysis.\n\nThe app is in its earliest stages, and right now can only perform an alpha diversity, beta diversity and community composition analysis. In the future, it will hopefully include more of microbiome and phyloseq's functions, and more types of visualizations.\n\nMeta-shiny is being developed for BioData.pt and ELIXIR.")
+  })
   
-  # Pick the dataset
+  #Load dataset from file
+  datasetInputFromFile <- reactive({
+    req(input$datase)
+    input$datase
+  })
+  
+  # Pick the sample dataset
   datasetInput <- reactive({ #For alpha diversity
     switch(input$dataset,
            "dietswap" = dietswap,
@@ -224,6 +264,8 @@ server <- shinyServer(function(input, output, session){
                       choices=colnames(meta(datasetInputBeta())))
     updateSelectInput(session, "xc",
                       choices=colnames(meta(datasetInputBeta())))
+    updateSelectInput(session, "xd",
+                      choices=colnames(tax_table(datasetInputBeta())))
   })
   
   #Updating selectInputs when swapping datasets - Community Composition Analysis
@@ -263,14 +305,18 @@ server <- shinyServer(function(input, output, session){
   })
 
     # Renders the merged table, number of rows defined by the user  
-   output$view <- renderTable({
-   head(mergedTable(), n = input$obs)
+   output$view <- DT::renderDataTable({ #Issue with search -> search by specific term (like "male") doesn't work -> causes problem when searching between female (which gives all female samples) and male (which give both male and female samples). Still, a slightly dysfunctional search function is better than none at all
+   datatable(mergedTable())
   })
    
-   output$alpha_graph <- renderPlot({
+   output$violinPlot <- renderPlot({
      # Basic violin plot
      ggviolin(testies, x = input$x, y = input$y, add = "boxplot", fill = input$x, palette = c("#a6cee3", "#b2df8a", "#fdbf6f")) 
-   })
+     })
+    # Plot richness
+    output$richnessPlot <- renderPlot({
+      plot_richness(datasetInput(), x=input$x, measures=c("Shannon","Simpson"), color=input$x)
+    })
 
    
    #BETA DIV#
@@ -328,7 +374,7 @@ server <- shinyServer(function(input, output, session){
    })
   # Meta/Tax Level
    output$metaTaxSplitOrd <- renderPlot({
-     plot_ordination(datasetInput(), ordinateData(), type = "split", shape = input$xb, color = input$xd, label = input$xb)
+     plot_ordination(datasetInput(), ordinateData(), type = "taxa", color = input$xd, label = input$xb)
    })
    
    # Microbial community composition #
