@@ -60,14 +60,10 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                              selectInput("dataset","Choose the dataset to analyze.",
                                          choices = c("dietswap","atlas1006","peerj32")),
                             # #X (the metadata) and Y (the diversity measure)
-                             selectInput("x", "Choose a metadata column:", 
-                                         choices=colnames(testies)),
+                             selectInput("x", "Choose a metadata column test:", 
+                                         choices=colnames("testies")),
                              selectInput("y", "Choose a diversity measure:", 
-                                         choices=colnames(testies)),
-                            ##And the fill (also metadata)
-                             selectInput("fill", "Metadata for the color fill:", 
-                                        choices=colnames(testies)),
-                             
+                                         choices=colnames("testies")),
                              #Linebreaks
                              br(),
                              
@@ -91,11 +87,7 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                                           
                                           # Tab 3: The exceptionally lewd Violin Plots
                                           tabPanel( title = "Violin Plot",
-                                                    plotOutput("violinPlot"),
-                                            sidebarPanel(
-                                            selectInput("x", "Choose a metadata column:", 
-                                                        choices=colnames(testies))
-                                          )                                          
+                                                    plotOutput("violinPlot")
                                           ),
                                           
                                           # Tab 4: A phyloseq richness plot
@@ -118,10 +110,10 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                                            value = 1, min = 0),
                               
                               selectInput("xb", "Choose a metadata column:", 
-                                          choices=colnames(testies), selected = "bmi_group"),
+                                          choices=colnames("testies"), selected = "bmi_group"),
                               
                               selectInput("xc", "For metadata/metadata split plots, choose a metadata column:", 
-                                          choices=colnames(testies), selected = "bmi_group"),
+                                          choices=colnames("testies"), selected = "bmi_group"),
                               
                               selectInput("xd", "For metadata/tax rank split plot, choose a taxonomy rank:", 
                                           choices=c("Phylum", "Class", "Order", "Family","Genus")),
@@ -169,15 +161,15 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                               selectInput("datasetComp","Choose the dataset to analyze.",
                                           choices = c("dietswap","atlas1006","peerj32")),
                               selectInput("z1", "Choose a metadata column:", # For subsetting data, #1
-                                          choices=colnames(testies), selected = "bmi_group"),
+                                          choices=colnames("testies"), selected = "bmi_group"),
                               selectInput("v1", "Choose a metadata value:", # For subsetting data, metadata value
-                                          choices=sapply(testies, levels), selected = "lean"),
+                                          choices=sapply("testies", levels), selected = "lean"),
                               selectInput("z2", "Choose a seocond metadata column:", # For subsetting data, #2
-                                          choices=colnames(testies), selected = "nationality"),
+                                          choices=colnames("testies"), selected = "nationality"),
                               selectInput("v2", "Choose a second metadata value:", # For subsetting data, metadata #2 value
-                                          choices=sapply(testies, levels), selected = "AAM"),
+                                          choices=sapply("testies", levels), selected = "AAM"),
                               selectInput("z3", "Choose the intended timepoint:", # For subsetting data, timepoint data
-                                          choices=colnames(testies), selected = "timepoint.within.group"),
+                                          choices=colnames("testies"), selected = "timepoint.within.group"),
                               selectInput("v3", "Choose a timepoint value:", # For subsetting data, timepoint data value
                                           choices=c("0","1","2","3","4","5","6","7","8","9","10"), selected = "1"),
                               selectInput("v4", "Choose a taxonomy rank:", # Tax rank to analyze
@@ -300,7 +292,6 @@ server <- shinyServer(function(input, output, session){
   })
   
   
-  #Merges the alpha diversity table and the metadata of the dataset into one big table. 
   output$summary <- renderPrint({
     summarize_phyloseq(datasetInput())
   })
@@ -316,7 +307,7 @@ server <- shinyServer(function(input, output, session){
    
    output$violinPlot <- renderPlot({
      # Basic violin plot
-     ggviolin(testies, x = input$x, y = input$y, add = "boxplot", fill = input$x, palette = c("#a6cee3", "#b2df8a", "#fdbf6f")) 
+     ggviolin(mergedTable(), x = input$x, y = input$y, add = "boxplot", fill = input$x, palette = c("#a6cee3", "#b2df8a", "#fdbf6f")) 
      })
     # Plot richness
     output$richnessPlot <- renderPlot({
