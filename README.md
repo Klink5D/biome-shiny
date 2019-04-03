@@ -1,9 +1,9 @@
-# meta-shiny
-##  A Shiny R app for metagenomics analysis, built around the "microbiome" package
+# biome-shiny
+##  A Shiny R app for microbiome analysis, built around the "microbiome" package
 
 In essence, this app is a student project designed to create a semi or fully-automatic, easy to use pipeline, that could potentially be used by people with little knowledge of coding or bioinformatics.
 
-It also serves as a way for me to further my own knowledge on the creation of pipelines, metagenomics analyses, the Shiny library for R and the R language as a whole.
+It also serves as a way for me to further my own knowledge on the creation of pipelines, microbiome analyses, the Shiny library for R and the R language as a whole.
 
 *What it can do right now:*
 
@@ -13,7 +13,7 @@ Beta Diversity displays a series of ordination plots (two split, one not split) 
 
 Community Composition takes the user's input to display a variety of abundance plots: abundance by subject, relative abundance data and a taxa prevalence plot.
 
-The app is in very early stages and thus is extremely buggy and unfit for any actual work. I would hope that by the end, it'll be a functional, user-friendly app that allows even those with little bioinformatics knowledge to perform a thorough metagenomics analysis without having to go look through heaps of documentation.
+The app is in very early stages and thus is extremely buggy and unfit for any actual work. I would hope that by the end, it'll be a functional, user-friendly app that allows even those with little bioinformatics knowledge to perform a thorough microbiome analysis without having to go look through heaps of documentation.
 
 Citations:
 

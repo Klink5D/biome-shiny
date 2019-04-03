@@ -44,7 +44,7 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                             
                             
                             h5("Made with ",
-                               img(src = "shiny.png", height = "50"), "for ", img(src = "biodata.png", height = "30"))
+                               img(src = "shiny.png", height = "50"), "by ", img(src = "biodata.png", height = "30"))
                           ),
                           
                           mainPanel(
@@ -68,7 +68,7 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                              br(),
                              
                              h5("Made with ",
-                                img(src = "shiny.png", height = "50"), "for ", img(src = "biodata.png", height = "30"))
+                                img(src = "shiny.png", height = "50"), "by ", img(src = "biodata.png", height = "30"))
                            ),
                            
                            mainPanel(
@@ -131,7 +131,7 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                               br(),
                               
                               h5("Made with ",
-                                 img(src = "shiny.png", height = "50"), "for ", img(src = "biodata.png", height = "30"))
+                                 img(src = "shiny.png", height = "50"), "by ", img(src = "biodata.png", height = "30"))
                             ),
                             
                             mainPanel(
@@ -179,7 +179,7 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                               br(),
                               
                               h5("Made with ",
-                                 img(src = "shiny.png", height = "50"), "for ", img(src = "biodata.png", height = "30"))
+                                 img(src = "shiny.png", height = "50"), "by ", img(src = "biodata.png", height = "30"))
                             ),
                             
                             mainPanel(
@@ -198,7 +198,23 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                             )
                             )
                           )
-                 )
+                 ),
+            tabPanel("Core microbiota analysis",
+                fluidPage(
+                    titlePanel("Core microbiota analysis", windowTitle = "meta-shiny v0.0.0.2"),
+                    sidebarPanel(
+                      #selectInput("datasetCore", "Choose the dataset to analyze"),
+                      sliderInput("detectionPrevalence", "For prevalences: Choose detection value", min = 0.00, max = 1, value = 0.01, step = 0.01),
+                      numericInput("prevalencePrevalence","Input a prevalence value", min = 0, max = 1, value = 0.5, step = 0.05),
+                      br(),
+                      h5("Made with ",
+                         img(src = "shiny.png", height = "50"), "by ", img(src = "biodata.png", height = "30"))
+                    ),
+                      mainPanel(
+                        
+                      )
+                    )
+            )
               
 )
 
@@ -409,14 +425,14 @@ server <- shinyServer(function(input, output, session){
   
   # 3.3 - Make a heatmap too
   
-  #Composition heatmap
+  #Composition barplot
   output$communityHeatmap <- renderPlot({ plot_composition(datasetSubsetInput(),
                         plot.type = "heatmap",
                         sample.sort = "neatmap",
                         otu.sort = "neatmap")
   })
   
-  # 3.4 - Also a heatmap, but averaged by z1 group - replace with user pick later
+  # 3.4 - Also a barplot, but averaged by z1 group - replace with user pick later
   output$CommunityHeatmap2 <- renderPlot({ 
     plot_composition(datasetSubsetInput(), average_by = input$z1 )
   })
