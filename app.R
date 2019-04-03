@@ -1,4 +1,4 @@
-# meta-shiny: A Shiny R app for metagenomics analysis, built around the "microbiome" package
+# biome-shiny: A Shiny R app for metagenomics analysis, built around the "microbiome" package
 # current version: v0.0.0.2
 
 #Considerations: modal dialog to fullscreen plots on click/download plots
@@ -28,12 +28,12 @@ data("peerj32")
 peerj32 <- peerj32$phyloseq
 
 #UI#
-ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
+ui <- navbarPage("biome-shiny v0.0.0.2", fluid = TRUE,
                  
                  theme = shinytheme("united"),
                  
                  tabPanel("Introduction",
-                          titlePanel("Welcome to meta-shiny", windowTitle = "meta-shiny v0.0.2"),
+                          titlePanel("Welcome to biome-shiny", windowTitle = "biome-shiny v0.0.2"),
                           
                           sidebarPanel(
                             fileInput("datase", "Please upload a dataset (BIOM, QIIME or MOTHUR file).",
@@ -53,7 +53,7 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                    ),
                  
                  tabPanel( "Alpha Diversity",
-                           titlePanel("Alpha Diversity", windowTitle = "meta-shiny v0.0.0.2"), 
+                           titlePanel("Alpha Diversity", windowTitle = "biome-shiny v0.0.0.2"), 
 
                            #The sidebar
                            sidebarPanel(
@@ -99,7 +99,7 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                  ),
                  tabPanel("Beta Diversity",
                           fluidPage(
-                            titlePanel("Beta Diversity", windowTitle = "meta-shiny v0.0.0.2"),
+                            titlePanel("Beta Diversity", windowTitle = "biome-shiny v0.0.0.2"),
                             
                             #The sidebar
                             sidebarPanel(
@@ -154,7 +154,7 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                  tabPanel("Community Composition",
                           
                           fluidPage(
-                            titlePanel("Community Composition", windowTitle = "meta-shiny v0.0.0.2"),
+                            titlePanel("Community Composition", windowTitle = "biome-shiny v0.0.0.2"),
                             
                             #The sidebar
                             sidebarPanel(
@@ -199,9 +199,9 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                             )
                           )
                  ),
-            tabPanel("Core microbiota analysis",
+            tabPanel("Core microbiota analysis", #Something I want to to is use this to subset the data
                 fluidPage(
-                    titlePanel("Core microbiota analysis", windowTitle = "meta-shiny v0.0.0.2"),
+                    titlePanel("Core microbiota analysis", windowTitle = "biome-shiny v0.0.0.2"),
                     sidebarPanel(
                       #selectInput("datasetCore", "Choose the dataset to analyze"),
                       sliderInput("detectionPrevalence", "For prevalences: Choose detection value", min = 0.00, max = 1, value = 0.01, step = 0.01),
@@ -211,7 +211,15 @@ ui <- navbarPage("meta-shiny v0.0.0.2", fluid = TRUE,
                          img(src = "shiny.png", height = "50"), "by ", img(src = "biodata.png", height = "30"))
                     ),
                       mainPanel(
-                        
+                        tabsetPanel(
+                          tabPanel("Prevalence",
+                            # Output the prevalence in relatives
+                            verbatimTextOutput("prevalenceRelative"),
+                            # And in absolutes
+                            verbatimTextOutput("prevalenceAbsolute")
+                          ),
+                          tabPanel("Core taxa")
+                        )
                       )
                     )
             )
@@ -223,7 +231,7 @@ server <- shinyServer(function(input, output, session){
   
   #Introduction text
   output$introText <- renderText({
-    paste0("Meta-shiny is a metagenomics pipeline developed with the Shiny library for R, and based, primarily, on the \"microbiome\" and \"phyloseq\" libraries for analysis.\n\nThe app is in its earliest stages, and right now can only perform an alpha diversity, beta diversity and community composition analysis. In the future, it will hopefully include more of microbiome and phyloseq's functions, and more types of visualizations.\n\nMeta-shiny is being developed for BioData.pt and ELIXIR.")
+    paste0("biome-shiny is a metagenomics pipeline developed with the Shiny library for R, and based, primarily, on the \"microbiome\" and \"phyloseq\" libraries for analysis.\n\nThe app is in its earliest stages, and right now can only perform an alpha diversity, beta diversity and community composition analysis. In the future, it will hopefully include more of microbiome and phyloseq's functions, and more types of visualizations.\n\nbiome-shiny is being developed for BioData.pt and ELIXIR.")
   })
   
   #Load dataset from file
@@ -441,6 +449,43 @@ server <- shinyServer(function(input, output, session){
   output$communityPrevalence <- renderPlot({  
     plot_taxa_prevalence(datasetSubsetInput(), input$v4 ) #Can be changed to whatever taxonomic rank the input files have
   })
+  
+  ## CORE MICROBIOTA ##
+  #Convert to compositional
+  compositionalInput2 <- reactive({
+    microbiome::transform(datasetInput(),"compositional")
+  })
+  
+  # Prevalences
+  prevalenceAbsolute <- renderText({
+    prevalence(compositionalInput2(), detection = input$detectionPrevalence, sort = TRUE, count = TRUE)
+  })
+  
+  prevalenceRelative <- renderText({
+    relativeData <- microbiome::transform(datasetInput(), "compositional")
+    prevalence(compositionalInput2(), detection = input$detectionPrevalence, sort = TRUE)
+  })
+  
+  # Core analysis
+  
+  coreMembers <- renderText({
+    core_members(compositionalInput2(), detection = input$detectionPrevalence, prevalence = input$prevalencePrevalence )
+  })
+  
+  corePhylo <- reactive({
+    core(compositionalInput2(), detection = input$detectionPrevalence, prevalence = input$prevalencePrevalence )
+  })
+  
+  coreTaxa <- renderText({
+    taxa(corePhylo())
+  })
+  
+  
+  
+  # Core abundance per sample
+  
+  # Visualization (lineplots and heatmaps)
+  
 })
 # Run the application 
 
