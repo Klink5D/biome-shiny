@@ -1,5 +1,5 @@
 # biome-shiny: A Shiny R app for metagenomics analysis, built around the "microbiome" package
-# current version: v0.0.0.2
+# current version: v0.0.0.3
 
 #Considerations: modal dialog to fullscreen plots on click/download plots
 #                Separate plots into different tabs, along with the sidebar choices you need to generate said plots
@@ -28,7 +28,7 @@ data("peerj32")
 peerj32 <- peerj32$phyloseq
 
 #UI#
-ui <- navbarPage("biome-shiny v0.0.0.2", fluid = TRUE,
+ui <- navbarPage("biome-shiny v0.0.0.3", fluid = TRUE,
                  
                  theme = shinytheme("united"),
                  
@@ -53,7 +53,7 @@ ui <- navbarPage("biome-shiny v0.0.0.2", fluid = TRUE,
                    ),
                  
                  tabPanel( "Alpha Diversity",
-                           titlePanel("Alpha Diversity", windowTitle = "biome-shiny v0.0.0.2"), 
+                           titlePanel("Alpha Diversity", windowTitle = "biome-shiny v0.0.0.3"), 
 
                            #The sidebar
                            sidebarPanel(
@@ -99,7 +99,7 @@ ui <- navbarPage("biome-shiny v0.0.0.2", fluid = TRUE,
                  ),
                  tabPanel("Beta Diversity",
                           fluidPage(
-                            titlePanel("Beta Diversity", windowTitle = "biome-shiny v0.0.0.2"),
+                            titlePanel("Beta Diversity", windowTitle = "biome-shiny v0.0.0.3"),
                             
                             #The sidebar
                             sidebarPanel(
@@ -154,7 +154,7 @@ ui <- navbarPage("biome-shiny v0.0.0.2", fluid = TRUE,
                  tabPanel("Community Composition",
                           
                           fluidPage(
-                            titlePanel("Community Composition", windowTitle = "biome-shiny v0.0.0.2"),
+                            titlePanel("Community Composition", windowTitle = "biome-shiny v0.0.0.3"),
                             
                             #The sidebar
                             sidebarPanel(
@@ -201,7 +201,7 @@ ui <- navbarPage("biome-shiny v0.0.0.2", fluid = TRUE,
                  ),
             tabPanel("Core microbiota analysis", #Something I want to to is use this to subset the data
                 fluidPage(
-                    titlePanel("Core microbiota analysis", windowTitle = "biome-shiny v0.0.0.2"),
+                    titlePanel("Core microbiota analysis", windowTitle = "biome-shiny v0.0.0.3"),
                     sidebarPanel(
                       
                       selectInput("datasetCore","Choose the dataset to analyze.",
