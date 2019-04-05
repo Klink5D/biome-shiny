@@ -203,22 +203,37 @@ ui <- navbarPage("biome-shiny v0.0.0.2", fluid = TRUE,
                 fluidPage(
                     titlePanel("Core microbiota analysis", windowTitle = "biome-shiny v0.0.0.2"),
                     sidebarPanel(
-                      #selectInput("datasetCore", "Choose the dataset to analyze"),
-                      sliderInput("detectionPrevalence", "For prevalences: Choose detection value", min = 0.00, max = 1, value = 0.01, step = 0.01),
+                      
+                      selectInput("datasetCore","Choose the dataset to analyze.",
+                                  choices = c("dietswap","atlas1006","peerj32")),
+                      numericInput("detectionPrevalence", "For prevalences: Choose detection value", min = 0.00, max = 100, value = 0.01, step = 0.01),
                       numericInput("prevalencePrevalence","Input a prevalence value", min = 0, max = 1, value = 0.5, step = 0.05),
+                      selectInput("prevalenceSelection", multiple = TRUE, selectize = TRUE, choices = c(seq(0,1,by=0.01)), label = "Choose prevalence values for lineplot and heatmap"),
+                      textInput("detectionForLineplot", label = "Enter detection values, separated by comma, for the lineplot"),
+                      textInput("detectionMin", label = "Enter minimum limit for detection"),
+                      textInput("detectionMax", label = "Enter maximum limit for detection"),
+                      textInput("maxLength", label = "Enter length (number of values)"),
                       br(),
                       h5("Made with ",
                          img(src = "shiny.png", height = "50"), "by ", img(src = "biodata.png", height = "30"))
                     ),
                       mainPanel(
                         tabsetPanel(
-                          tabPanel("Prevalence",
-                            # Output the prevalence in relatives
-                            verbatimTextOutput("prevalenceRelative"),
-                            # And in absolutes
-                            verbatimTextOutput("prevalenceAbsolute")
+                          tabPanel("Prevalence (relative)",
+                            # Output the prevalence in relatives and absolutes (Counts)
+                                  dataTableOutput("prevalenceRelativeOutput")
                           ),
-                          tabPanel("Core taxa")
+                          tabPanel("Prevalence (absolute)",
+                                  dataTableOutput("prevalenceAbsoluteOutput")
+                          ),
+                          tabPanel("Core Taxa Summary",
+                                  verbatimTextOutput("corePhyloSummary"),
+                                  verbatimTextOutput("coreTaxa")
+                          ),
+                          tabPanel("Core Taxa Visualization",
+                                  plotOutput("coreLineplot"),
+                                  plotOutput("coreHeatmap")
+                          )
                         )
                       )
                     )
@@ -231,7 +246,7 @@ server <- shinyServer(function(input, output, session){
   
   #Introduction text
   output$introText <- renderText({
-    paste0("biome-shiny is a metagenomics pipeline developed with the Shiny library for R, and based, primarily, on the \"microbiome\" and \"phyloseq\" libraries for analysis.\n\nThe app is in its earliest stages, and right now can only perform an alpha diversity, beta diversity and community composition analysis. In the future, it will hopefully include more of microbiome and phyloseq's functions, and more types of visualizations.\n\nbiome-shiny is being developed for BioData.pt and ELIXIR.")
+    paste0("biome-shiny is a microbiome analysis pipeline developed with the Shiny library for R, and based, primarily, on the \"microbiome\" and \"phyloseq\" libraries for analysis.\n\nThe app is in its earliest stages, and right now can only perform an alpha diversity, beta diversity and community composition analysis. In the future, it will hopefully include more of microbiome and phyloseq's functions, and more types of visualizations.\n\nbiome-shiny is being developed by BioData.pt for ELIXIR.")
   })
   
   #Load dataset from file
@@ -259,6 +274,14 @@ server <- shinyServer(function(input, output, session){
   
   datasetInputComposition <- reactive({ #For CC
     switch(input$datasetComp,
+           "dietswap" = dietswap,
+           "atlas1006" = atlas1006,
+           "peerj32" = peerj32
+    )
+  })
+  
+  datasetInputCore <- reactive({ #For Core Microbiota
+    switch(input$datasetCore,
            "dietswap" = dietswap,
            "atlas1006" = atlas1006,
            "peerj32" = peerj32
@@ -453,39 +476,51 @@ server <- shinyServer(function(input, output, session){
   ## CORE MICROBIOTA ##
   #Convert to compositional
   compositionalInput2 <- reactive({
-    microbiome::transform(datasetInput(),"compositional")
+    microbiome::transform(datasetInputCore(),"compositional")
   })
   
-  # Prevalences
-  prevalenceAbsolute <- renderText({
-    prevalence(compositionalInput2(), detection = input$detectionPrevalence, sort = TRUE, count = TRUE)
+  #Prevalence calculation
+  prevalenceAbsolute <- reactive({
+    as.data.frame(prevalence(compositionalInput2(), detection = input$detectionPrevalence/100, sort = TRUE, count = TRUE))
+  })
+  prevalenceRelative <- reactive({
+    as.data.frame(prevalence(compositionalInput2(), detection = input$detectionPrevalence/100, sort = TRUE))
   })
   
-  prevalenceRelative <- renderText({
-    relativeData <- microbiome::transform(datasetInput(), "compositional")
-    prevalence(compositionalInput2(), detection = input$detectionPrevalence, sort = TRUE)
+  # Prevalence output - DT is absolutely fantastic
+  output$prevalenceAbsoluteOutput <- renderDT({
+     datatable(prevalenceAbsolute())
+  })
+  output$prevalenceRelativeOutput <- renderDT({
+    datatable(prevalenceRelative())
   })
   
   # Core analysis
-  
-  coreMembers <- renderText({
-    core_members(compositionalInput2(), detection = input$detectionPrevalence, prevalence = input$prevalencePrevalence )
-  })
-  
-  corePhylo <- reactive({
+  corePhylo <- reactive({ # Generates a phyloseq file from input
     core(compositionalInput2(), detection = input$detectionPrevalence, prevalence = input$prevalencePrevalence )
   })
-  
-  coreTaxa <- renderText({
+  output$corePhyloSummary <- renderPrint({ # Summary of corePhylo file
+    summarize_phyloseq(corePhylo())  
+  })
+  output$coreTaxa <- renderPrint({ # Reports the taxa in corePhylo
     taxa(corePhylo())
   })
   
-  
-  
-  # Core abundance per sample
-  
   # Visualization (lineplots and heatmaps)
+  output$coreLineplot <- renderPlot({
+    prevalences <- as.numeric(input$prevalenceSelection)
+    detections <- as.numeric(unlist(strsplit(input$detectionForLineplot, split = ",")))/100
+    print(detections)
+    plot_core(compositionalInput2(), prevalences = prevalences, detections = detections, plot.type = "lineplot") + xlab("Relative Abundance (%)")
+  })
   
+  output$coreHeatmap <- renderPlot({
+    # Core with compositionals:
+    prevalence <- as.numeric(input$prevalenceSelection)
+    detections <- 10^seq(log10(as.numeric(input$detectionMin)), log10(as.numeric(input$detectionMax)), length = as.numeric(input$maxLength))
+    gray <- gray(seq(0,1,length=5))
+    plot_core(compositionalInput2(), plot.type = "heatmap", colours = gray, prevalences = prevalences, detections = detections, min.prevalence = .5) + xlab("Detection Threshold (Relative Abundance (%))")
+  })
 })
 # Run the application 
 
