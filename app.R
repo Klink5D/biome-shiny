@@ -19,7 +19,7 @@ library("ggplot2")
 library("hrbrthemes")
 library("reshape2")
 library("DT")
-library("randomcoloR")
+library("DirichletMultinomial")
 
 #load the example datasets
 data("dietswap")
@@ -237,8 +237,39 @@ ui <- navbarPage("biome-shiny v0.0.0.3", fluid = TRUE,
                         )
                       )
                     )
-            )
-              
+            ),
+          tabPanel("Dirichlet Multinomial Mixtures",
+                   titlePanel("Community typing with DMM", windowTitle = "biome-shiny v0.0.0.3"),
+                   sidebarPanel(
+                     selectInput("datasetDMM","Choose the dataset to analyze.",
+                                 choices = c("dietswap","atlas1006","peerj32")),
+                     numericInput("detectionDMM", label="Input detection threshold for DMM", min = 0, max = 100, step = 0.1, value = "0.1"),
+                     numericInput("prevalenceDMM", label="Input prevalence percentage of samples for DMM0", min = 0, max = 100, step = 0.1, value = "50"),
+                     numericInput("maxModelsDMM", label="Input maximum number of community types for the DMM model, or leave empty for infinite types at the cost of performance.", value = "3"),
+                     h5("Made with ",
+                        img(src = "shiny.png", height = "50"), "by ", img(src = "biodata.png", height = "30"))
+                   ),
+                   mainPanel(
+                      tabsetPanel(
+                        tabPanel("Test1",
+                            verbatimTextOutput("dmmModelFit")
+                        ),
+                        
+                        tabPanel("Test2",
+                                 plotOutput("dmmModelCheck")
+                        ),
+                        
+                        tabPanel("Test3",
+                                 dataTableOutput("dmmParameters"),
+                                 dataTableOutput("sampleAssignments")
+                        ),
+                        
+                        tabPanel("Test4",
+                                 plotOutput("taxaContributionPerComponent")
+                        )
+                      )
+                   )
+          )  
 )
 
 #SERVER#
@@ -288,7 +319,16 @@ server <- shinyServer(function(input, output, session){
     )
   })
 
-  # Metadata
+  datasetInputDMM <- reactive({ #For DMM community typing
+    switch(input$datasetDMM,
+           "dietswap" = dietswap,
+           "atlas1006" = atlas1006,
+           "peerj32" = peerj32
+    )
+  })
+  
+  
+    # Metadata
   output$testies <- renderTable({
     meta(datasetInput())
   })
@@ -516,11 +556,67 @@ server <- shinyServer(function(input, output, session){
   
   output$coreHeatmap <- renderPlot({
     # Core with compositionals:
-    prevalence <- as.numeric(input$prevalenceSelection)
+    prevalences <- as.numeric(input$prevalenceSelection)
     detections <- 10^seq(log10(as.numeric(input$detectionMin)), log10(as.numeric(input$detectionMax)), length = as.numeric(input$maxLength))
     gray <- gray(seq(0,1,length=5))
     plot_core(compositionalInput2(), plot.type = "heatmap", colours = gray, prevalences = prevalences, detections = detections, min.prevalence = .5) + xlab("Detection Threshold (Relative Abundance (%))")
   })
+  
+  #DMM COMMUNITY TYPING#
+  
+  compositionalInputDMM <- reactive({
+    microbiome::transform(datasetInputDMM(),"compositional")
+  })
+  
+  # Pick OTU count matrix, convert into samplex x taxa format and fit the DMM model
+  dmmModelFit <- reactive({
+    taxa <- core_members(compositionalInputDMM(), detection = input$detectionDMM/100, prevalence = input$prevalenceDMM/100) #need to make this related to core comp, along with the coremembers in beta diversity
+    pseq <- prune_taxa(taxa, datasetInputDMM())
+    dat <- abundances(pseq)
+    count <- as.matrix(t(dat))
+    mclapply(1:input$maxModelsDMM, dmn, count = count, verbose=TRUE)
+  })
+  output$dmmModelCheck <- renderPlot({
+    lplc <- sapply(dmmModelFit(), laplace) # AIC / BIC / Laplace
+    aic  <- sapply(dmmModelFit(), AIC) # AIC / BIC / Laplace
+    bic  <- sapply(dmmModelFit(), BIC) # AIC / BIC / Laplace
+    plot(lplc, type="b", xlab="Number of Dirichlet Components", ylab="Model Fit")
+    lines(aic, type="b", lty = 2)
+    lines(bic, type="b", lty = 3)
+  })
+  
+  dmmModelBestFit <- reactive({
+    lplc <- sapply(dmmModelFit(), laplace) # AIC / BIC / Laplace
+    aic  <- sapply(dmmModelFit(), AIC) # AIC / BIC / Laplace
+    bic  <- sapply(dmmModelFit(), BIC) # AIC / BIC / Laplace
+    fit[[which.min(lplc)]]
+  })
+  
+  output$dmmParameters <- renderDT({
+    mixturewt(dmmModelBestFit())
+  })
+  
+  output$taxaContributionPerComponent <- renderPlot({
+    for (k in seq(ncol(fitted(dmmModelBestFit())))) {
+      d <- melt(fitted(dmmModelBestFit()))
+      colnames(d) <- c("OTU", "cluster", "value")
+      d <- subset(d, cluster == k) %>%
+        # Arrange OTUs by assignment strength
+        arrange(value) %>%
+        mutate(OTU = factor(OTU, levels = unique(OTU))) %>%
+        # Only show the most important drivers
+        filter(abs(value) > quantile(abs(value), 0.8))     
+      
+      p <- ggplot(d, aes(x = OTU, y = value)) +
+        geom_bar(stat = "identity") +
+        coord_flip() +
+        labs(title = paste("Top drivers: community type", k))
+      print(p)
+    }
+  })
+
+  #Bug: Only the final plot is d
+  
 })
 # Run the application 
 

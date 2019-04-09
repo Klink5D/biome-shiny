@@ -38,4 +38,6 @@ Yihui Xie (2019). knitr: A General-Purpose Package for Dynamic Report Generation
 Bob Rudis (2019). hrbrthemes: Additional Themes, Theme Components and Utilities for 'ggplot2'. R package version
 0.6.0. https://CRAN.R-project.org/package=hrbrthemes
 
+  Martin Morgan (2019). DirichletMultinomial: Dirichlet-Multinomial Mixture Model Machine
+  Learning for Microbiome Data. R package version 1.24.1.
 
