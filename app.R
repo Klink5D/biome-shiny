@@ -28,7 +28,7 @@ data("peerj32")
 peerj32 <- peerj32$phyloseq
 
 #UI#
-ui <- navbarPage("biome-shiny v0.0.0.3", fluid = TRUE,
+ui <- navbarPage("biome-shiny v0.0.0.4", fluid = TRUE,
                  
                  theme = shinytheme("united"),
                  
@@ -53,7 +53,7 @@ ui <- navbarPage("biome-shiny v0.0.0.3", fluid = TRUE,
                    ),
                  
                  tabPanel( "Alpha Diversity",
-                           titlePanel("Alpha Diversity", windowTitle = "biome-shiny v0.0.0.3"), 
+                           titlePanel("Alpha Diversity", windowTitle = "biome-shiny v0.0.0.4"), 
 
                            #The sidebar
                            sidebarPanel(
@@ -99,7 +99,7 @@ ui <- navbarPage("biome-shiny v0.0.0.3", fluid = TRUE,
                  ),
                  tabPanel("Beta Diversity",
                           fluidPage(
-                            titlePanel("Beta Diversity", windowTitle = "biome-shiny v0.0.0.3"),
+                            titlePanel("Beta Diversity", windowTitle = "biome-shiny v0.0.0.4"),
                             
                             #The sidebar
                             sidebarPanel(
@@ -154,7 +154,7 @@ ui <- navbarPage("biome-shiny v0.0.0.3", fluid = TRUE,
                  tabPanel("Community Composition",
                           
                           fluidPage(
-                            titlePanel("Community Composition", windowTitle = "biome-shiny v0.0.0.3"),
+                            titlePanel("Community Composition", windowTitle = "biome-shiny v0.0.0.4"),
                             
                             #The sidebar
                             sidebarPanel(
@@ -201,7 +201,7 @@ ui <- navbarPage("biome-shiny v0.0.0.3", fluid = TRUE,
                  ),
             tabPanel("Core microbiota analysis", #Something I want to to is use this to subset the data
                 fluidPage(
-                    titlePanel("Core microbiota analysis", windowTitle = "biome-shiny v0.0.0.3"),
+                    titlePanel("Core microbiota analysis", windowTitle = "biome-shiny v0.0.0.4"),
                     sidebarPanel(
                       
                       selectInput("datasetCore","Choose the dataset to analyze.",
@@ -239,7 +239,7 @@ ui <- navbarPage("biome-shiny v0.0.0.3", fluid = TRUE,
                     )
             ),
           tabPanel("Dirichlet Multinomial Mixtures",
-                   titlePanel("Community typing with DMM", windowTitle = "biome-shiny v0.0.0.3"),
+                   titlePanel("Community typing with DMM", windowTitle = "biome-shiny v0.0.0.4"),
                    sidebarPanel(
                      selectInput("datasetDMM","Choose the dataset to analyze.",
                                  choices = c("dietswap","atlas1006","peerj32")),
@@ -251,25 +251,61 @@ ui <- navbarPage("biome-shiny v0.0.0.3", fluid = TRUE,
                    ),
                    mainPanel(
                       tabsetPanel(
-                        tabPanel("Test1",
-                            verbatimTextOutput("dmmModelFit")
-                        ),
-                        
-                        tabPanel("Test2",
+                        tabPanel("Model Verification Lineplot",
                                  plotOutput("dmmModelCheck")
                         ),
                         
-                        tabPanel("Test3",
+                        tabPanel("Alpha and Theta Parameters",
                                  dataTableOutput("dmmParameters"),
                                  dataTableOutput("sampleAssignments")
                         ),
                         
-                        tabPanel("Test4",
+                        tabPanel("Taxa Contribution Per Community Type",
                                  plotOutput("taxaContributionPerComponent")
                         )
                       )
                    )
-          )  
+          ),
+          tabPanel("Landscape analysis",
+                titlePanel("Landscape analysis", windowTitle = "biome-shiny v0.0.0.4"),
+                sidebarPanel(
+                  selectInput("datasetLandscape","Choose the dataset to analyze.",
+                              choices = c("dietswap","atlas1006","peerj32")),
+                  
+                  selectInput("ordinateMethodLandscape", "Choose an ordination method:", 
+                              choices=c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"), selected = "CCA"),
+                  
+                  selectInput("ordinateDistanceLandscape", "Choose a distance method:", 
+                              choices=c("bray","jaccard","unifrac"), selected = "unifrac"), #There's 44 of these in total
+                  numericInput("detectionLandscape", label="Input detection threshold for landscape analysis", min = 0, max = 100, step = 0.1, value = "0.1"),
+                  numericInput("prevalenceLandscape", label="Input prevalence percentage of samples for landscape analysis", min = 0, max = 100, step = 0.1, value = "50"),
+                  selectInput("metadataLandscape1", "Choose first metadata column to subset data:", choices=colnames("testies")),
+                  selectInput("metadataLandscapeValue1", "Choose first metadata value:", choices=sapply("testies", levels)),
+                  selectInput("metadataLandscape2", "Choose second metadata column to subset data:", choices=colnames("testies")),
+                  selectInput("metadataLandscapeValue2", "Choose second metadata value:", choices=sapply("testies", levels)),
+                  
+                  h5("Made with ",
+                     img(src = "shiny.png", height = "50"), "by ", img(src = "biodata.png", height = "30"))
+                ),
+                mainPanel(
+                  tabsetPanel(
+                    tabPanel("PCA",
+                      plotOutput("landscapePCA")
+                    ),
+                    tabPanel("PCoA/MDS/NMDS",
+                       plotOutput("landscapeOrdination"),
+                       plotOutput("landscapeOrdinationSamplenames")
+                    ),
+                    tabPanel("t-SNE",
+                       plotOutput("landscapeTSne")
+                    ),
+                    tabPanel("Abundance histogram (one-dimensional landscape)",
+                       plotOutput("landscapeAbundanceHistAbs"),
+                       plotOutput("landscapeAbundanceHistRel")
+                    )
+                  )
+                )
+              )
 )
 
 #SERVER#
@@ -283,7 +319,7 @@ server <- shinyServer(function(input, output, session){
   #Load dataset from file
   datasetInputFromFile <- reactive({
     req(input$datase)
-    input$datase
+    import_biom(input$datase)
   })
   
   # Pick the sample dataset
@@ -321,6 +357,14 @@ server <- shinyServer(function(input, output, session){
 
   datasetInputDMM <- reactive({ #For DMM community typing
     switch(input$datasetDMM,
+           "dietswap" = dietswap,
+           "atlas1006" = atlas1006,
+           "peerj32" = peerj32
+    )
+  })
+  
+  datasetInputLandscape <- reactive({ #For landscape analysis
+    switch(input$datasetLandscape,
            "dietswap" = dietswap,
            "atlas1006" = atlas1006,
            "peerj32" = peerj32
@@ -378,6 +422,25 @@ server <- shinyServer(function(input, output, session){
                       choices=(sample_data(datasetInputComposition())[[input$z3]]))
   })
   
+  #Update metadata selectInputs when swapping datasets - Landscape analysis
+  observe({
+    updateSelectInput(session, "metadataLandscape1",
+                      choices=colnames(meta(datasetInputLandscape())))
+  })
+  observe({
+    updateSelectInput(session, "metadataLandscape2",
+                      choices=colnames(meta(datasetInputLandscape())))
+  })
+  
+  #Update metadata values for landscape analysis 
+  observeEvent(input$metadataLandscape1,{
+    updateSelectInput(session, "metadataLandscapeValue1",
+                      choices=(sample_data(datasetInputComposition())[[input$metadataLandscape1]]))
+  })
+  observeEvent(input$metadataLandscape2,{
+    updateSelectInput(session, "metadataLandscapeValue2",
+                      choices=(sample_data(datasetInputComposition())[[input$metadataLandscape2]]))
+  })
   
   output$summary <- renderPrint({
     summarize_phyloseq(datasetInput())
@@ -462,7 +525,7 @@ server <- shinyServer(function(input, output, session){
    
    
    # Microbial community composition #
-   # 1 - Sebolect the column 
+   # 1 - Select the column 
    datasetSubsetInput <- reactive({
      subset1 <- prune_samples(sample_data(datasetInputComposition())[[input$z1]] == input$v1, datasetInputComposition())
      subset1 <- prune_samples(sample_data(subset1)[[input$z2]] == input$v2, subset1)
@@ -615,7 +678,64 @@ server <- shinyServer(function(input, output, session){
     }
   })
 
-  #Bug: Only the final plot is d
+  #Bug: Only the final plot is rendering
+  
+  # LANDSCAPE ANALYSIS #
+  
+  # 1 - Select the column 
+  datasetSubsetLandscape <- reactive({
+    subset <- prune_samples(sample_data(datasetInputLandscape())[[input$metadataLandscape1]] == input$metadataLandscapeValue1, datasetInputLandscape())
+    subset <- prune_samples(sample_data(subset)[[input$metadataLandscape2]] == input$metadataLandscapeValue2, subset)
+    microbiome::transform(subset, "compositional")
+  })
+  
+  #PCA plot
+  
+  output$landscapePCA <- renderPlot({ #Change transformation and method type to user input
+    p <- plot_landscape(datasetInputLandscape(), method = "PCA", transformation = "clr") +
+      labs(title = paste("PCA / CLR"))
+    print(p)
+  })
+  
+  #NMDS/PCoa/MDS
+  output$landscapeOrdination <- renderPlot({
+    x <- datasetInputLandscape()
+    quiet(x.ord <- ordinate(x, input$ordinateMethodLandscape, input$ordinateDistanceLandscape))
+    proj <- phyloseq::plot_ordination(x, x.ord, justDF=TRUE)
+    names(proj)[1:2] <- paste("Comp", 1:2, sep=".")
+    plot_landscape(proj[, 1:2], col = proj$nationality, legend = T)
+  })
+  output$landscapeOrdinationSamplenames <- renderPlot({
+    x <- datasetInputLandscape()
+    quiet(x.ord <- ordinate(x, input$ordinateMethodLandscape, input$ordinateDistanceLandscape))
+    proj <- phyloseq::plot_ordination(x, x.ord, justDF=TRUE)
+    names(proj)[1:2] <- paste("Comp", 1:2, sep=".")
+    ax1 <- names(proj)[[1]]
+    ax2 <- names(proj)[[2]]
+    ggplot(aes_string(x = ax1, y = ax2, label = "sample"), data = proj) +
+      geom_text(size = 2)
+  })
+  
+  #
+  output$landscapeTSne <- renderPlot({
+    plot_landscape(datasetInputLandscape(), "t-SNE",
+    distance = "euclidean", transformation = "hellinger") +
+    labs(title = paste("t-SNE / Hellinger / Euclidean"))       
+  })
+  
+  output$landscapeAbundanceHistAbs <- renderPlot({
+    # Visualize population densities for specific taxa
+    plot_density(datasetInputLandscape(), "Dialister") + ggtitle("Absolute abundance")
+  })
+  
+  output$landscapeAbundanceHistRel <- renderPlot({
+    # Visualize population densities for specific taxa
+    x <- microbiome::transform(datasetInputLandscape(), "compositional")
+    tax <- "Dialister"
+    plot_density(x, tax, log10 = TRUE) +
+      ggtitle("Relative abundance") +
+      xlab("Relative abundance (%)")
+  })
   
 })
 # Run the application 
