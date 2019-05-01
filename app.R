@@ -1,4 +1,8 @@
-# Biome-shiny 0.0.0.4
+# Biome-shiny 0.4
+
+# For Permanova
+  # 1. Make it so that it takes a distance matrix (output from beta diversity?) instead of abundances
+  # Which implies making it so Beta Diversity outputs a distance matrix on user input.
 
 library(shiny)
 library(shinydashboard)
@@ -12,7 +16,9 @@ library(dplyr)
 library(ggpubr)
 library(hrbrthemes)
 library(reshape2)
-library("DirichletMultinomial")
+library(DirichletMultinomial)
+library(vegan)
+#library(limma)
 
 
 # Load sample datasets #
@@ -23,7 +29,7 @@ peerj32 <- peerj32$phyloseq
 
 # UI
 ui <- dashboardPage(
-  dashboardHeader(title = "biome-shiny v0.0.0.4"),
+  dashboardHeader(title = "biome-shiny v0.4"),
   dashboardSidebar(
     sidebarMenu(
       menuItem(
@@ -31,12 +37,21 @@ ui <- dashboardPage(
         tabName = "intro",
         icon = icon("dashboard")
       ),
+      br(),
+      paste0("Microbiome analysis"),
       menuItem("Core microbiota", tabName = "coremicrobiota"),
       menuItem("Community composition", tabName = "communitycomposition"),
       menuItem("Alpha diversity", tabName = "alphadiversity"),
       menuItem("Beta diversity", tabName = "betadiversity"),
       menuItem("Community landscape", tabName = "landscaping"),
-      menuItem("DMM Clustering", tabName = "dirichlet")
+      menuItem("DMM Clustering", tabName = "dirichlet"),
+      br(),
+      paste0("Statistical analysis"),
+      menuItem("PERMANOVA", tabName = "permanova"),
+      menuItem("ANOSIM", tabName = "anosim"),
+      br(),
+      paste0("Outputs and Results"),
+      menuItem("Results", tabName = "results")
     ),
     
     br(),
@@ -84,7 +99,7 @@ ui <- dashboardPage(
       ),
       box(
         paste0(
-          "biome-shiny is a microbiome analysis pipeline developed with the Shiny library for R, and based, primarily, on the \"microbiome\" and \"phyloseq\" libraries for analysis.\n\nThe app is in its earliest stages, and right now can only perform an alpha diversity, beta diversity and community composition analysis. In the future, it will hopefully include more of microbiome and phyloseq's functions, and more types of visualizations.\n\nbiome-shiny is being developed by BioData.pt for ELIXIR."
+          "biome-shiny is a microbiome analysis pipeline developed with the Shiny library for R, and based, primarily, on the \"microbiome\" and \"phyloseq\" libraries for analysis.\n\n\n\nBiome-shiny is being developed by BioData.pt for ELIXIR."
         )
       )#, #Test variables please ignore
       # box(title = "Test Box",
@@ -299,7 +314,8 @@ ui <- dashboardPage(
       
       tabsetPanel(
         tabPanel(title = "Ordination Plot",
-                 plotlyOutput("ordinatePlot")
+                 plotlyOutput("ordinatePlot"),
+                 textOutput("ordinatePrint")
                 ),
         
         tabPanel(title = "Split Ordination Plot (Metadata/Metadata)",
@@ -366,8 +382,63 @@ ui <- dashboardPage(
                  plotlyOutput("taxaContributionPerComponent")
         )
       )
+    ),
+    tabItem(
+      tabName = "permanova",
+      box( title = "Variables", width = "2", collapsible = TRUE, collapsed = TRUE,
+           selectInput("permanovaDistanceMethod","Select distance method", choices = c("bray","jacard","unifrac"), selected = "unifrac"),
+           selectInput("permanovaMethod","Select ordination method",
+                       choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
+                       selected = "CCA"),
+           selectInput("permanovaColumn","Select metadata for density plot", choices = colnames("datasetMetadata")),
+           sliderInput("permanovaPlotSize", "Plot point size", min = 0.5, max = 10, step = 0.5, value = "3"),
+           numericInput("permanovaPermutations", "Number of permutations", min = 1, step = 1, value = 99)
+      ),
+      tabsetPanel(
+        tabPanel( title = "Population density plot",
+           plotlyOutput("densityPlot")
+        ),
+        tabPanel( title = "P-Value",
+                  dataTableOutput("pValue"),
+                  dataTableOutput("homogeniety")
+        ),
+        tabPanel ( title = "Top Factors",
+                   plotOutput("topFactorPlot") 
+        ),
+        tabPanel ( title = "Network Plot",
+                   plotlyOutput("netPlot")
+        ),
+        tabPanel ( title = "Heatmap",
+                   plotlyOutput("permaHeatmap")
+        )
+      )
+      ),
       
-  ))))
+      tabItem(tabName = "anosim",
+              box( title = "Variables", width = "2", collapsible = TRUE, collapsed = TRUE,
+                   selectInput("anosimDistanceMethod","Select distance method", choices = c("bray","jacard","unifrac"), selected = "unifrac"),
+                   selectInput("anosimMethod","Select ordination method",
+                               choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
+                               selected = "CCA"),
+                   selectInput("anosimColumn","Select metadata for density plot", choices = colnames("datasetMetadata")),
+                   sliderInput("anosimPlotSize", "Plot point size", min = 0.5, max = 10, step = 0.5, value = "3"),
+                   numericInput("anosimPermutations", "Number of permutations", min = 1, step = 1, value = 99)
+              ),
+              textOutput("pValueAnosim"),
+              textOutput("ordinateDataPrint")
+      ),
+    # tabItem(tabName = "limma",
+    #     box( title = "Variables", width = "2", collapsible = TRUE, collapsed = TRUE,
+    #          selectInput("limmaColumn","Select metadata for density plot", choices = colnames("datasetMetadata"))
+    #     ),
+    #     dataTableOutput("limmaTable")
+    #   ),
+    
+    tabItem(tabName = "results"
+      )
+    )
+  )
+)
 
 # Server
 server <- function(input, output, session) {
@@ -576,6 +647,30 @@ server <- function(input, output, session) {
     plotly_build(richnessplot)
   })
   
+  ## Report - Alpha Diversity ##
+  
+  # For PDF output, change this to "report.pdf"
+  output$report <- downloadHandler(
+    filename = "report.pdf",
+    content = function(file) {
+      # Copy the report file to a temporary directory before processing it, in
+      # case we don't have write permissions to the current working dir (which
+      # can happen when deployed).
+      tempReport <- file.path(tempdir(), "report.Rmd")
+      file.copy("report.Rmd", tempReport, overwrite = TRUE)
+      
+      # Set up parameters to pass to Rmd document
+      params <- list(n = input$slider)
+      
+      # Knit the document, passing in the `params` list, and eval it in a
+      # child of the global environment (this isolates the code in the document
+      # from the code in this app).
+      rmarkdown::render(tempReport, output_file = file,
+                        params = params,
+                        envir = new.env(parent = globalenv())
+      )
+    }
+  )
   
   ## Beta Diversity ##
   
@@ -601,8 +696,12 @@ server <- function(input, output, session) {
     ) #note to self, make method choosable from dropdown
   })
   
+  output$ordinatePrint <- renderPrint({
+    ordinateData()
+  })
+  
   output$ordinatePlot <- renderPlotly({
-    p <- plot_ordination(datasetInput(), ordinateData(), color = input$xb ) + geom_point(size = input$geom.size)
+    p <- phyloseq::plot_ordination(datasetInput(), ordinateData(), color = input$xb ) + geom_point(size = input$geom.size)
     plotly_build(p)
   })
   
@@ -785,6 +884,133 @@ server <- function(input, output, session) {
   #   print(datasetInput())
   # })
   ###########################################
+  
+  ###########################
+  ## Statistical analysis ###
+  ###########################
+  
+  ## PERMANOVA ##
+  
+  #Update metadata column#
+  observe({
+    updateSelectInput(session, "permanovaColumn",
+                      choices = colnames(meta(datasetInput())))
+  })
+  
+  permanova <- reactive({
+    otu <- abundances(compositionalInput())
+    meta <- meta(compositionalInput())
+    permnumber <- input$permanovaPermutations
+    metadata <- input$permanovaColumn
+    adonis(t(otu) ~ meta[[metadata]],
+                        data = meta, permutations = permnumber, method = "bray", parallel = getOption("mc.cores")
+    )
+  })
+  
+  output$permaprint <- renderText({
+      print(abundances(compositionalInput()))
+      print(meta(datasetInput()))
+      print(typeof(input$permanovaColumn))
+      print(typeof(meta(datasetInput())$sex))
+      print(input$permanovaPermutations)
+  })
+  
+  output$densityPlot <- renderPlotly({
+    p <- plot_landscape(compositionalInput(), method = input$permanovaMethod, distance = input$permanovaDistanceMethod, col = input$permanovaColumn, size = input$permanovaPlotSize)
+    plotly_build(p)
+  })
+  
+  # output$pValue <- renderPrint({
+  #   as.data.frame(permanova()$aov.tab)[paste0('"',input$permanovaColumn,'"'), "Pr(>F)"]
+  # })
+  
+  output$pValue <- renderDataTable({
+    as.data.frame(permanova()$aov.tab)
+  })
+    
+  output$homogeniety <- renderDataTable({
+    otu <- abundances(compositionalInput())
+    meta <- meta(compositionalInput())
+    dist <- vegdist(t(otu))
+    metadata <- input$permanovaColumn
+    anova(betadisper(dist, meta[[metadata]]))
+  })
+  
+  output$topFactorPlot <- renderPlot({
+    otu <- abundances(compositionalInput())
+    meta <- meta(compositionalInput())
+    permnumber <- input$permanovaPermutations
+    metadata <- input$permanovaColumn
+    column <- meta[[metadata]]
+    permanova <- adonis(t(otu) ~ column,
+           data = meta, permutations = permnumber, method = "bray"
+    )
+    coef <- coefficients(permanova)["column1",]
+    top.coef <- coef[rev(order(abs(coef)))[1:20]] #top 20 coefficients
+    par(mar = c(3, 14, 2, 1))
+    p <- barplot(sort(top.coef), horiz = T, las = 1, main = "Top taxa")
+    print(p)
+  })
+  
+  output$netPlot <- renderPlotly({
+    n <- make_network(compositionalInput(), type = "otu", distance = "bray")
+    p <- plot_network(n)
+    plotly_build(p)  
+  })
+  
+  output$permaHeatmap <- renderPlotly({
+    p <- plot_heatmap(compositionalInput(), distance = ordinate(compositionalInput(), distance = input$ordinate.distance), method = input$ordinate.method)
+    plotly_build(p, color = meta[[metadata]])
+  })
+  
+  # ANOSIM #
+  #Update metadata column#
+  observe({
+    updateSelectInput(session, "anosimColumn",
+                      choices = colnames(meta(datasetInput())))
+  })
+  
+  anosim <- reactive({
+    otu <- abundances(compositionalInput())
+    meta <- meta(compositionalInput())
+    permnumber <- input$anosimPermutations
+    metadata <- input$anosimColumn
+  })
+  
+  output$pValueAnosim <- renderPrint({
+    otu <- abundances(compositionalInput())
+    meta <- meta(compositionalInput())
+    metadata <- input$anosimColumn
+    vegan::anosim(otu, meta[[metadata]], permutations = 99, distance = "bray", parallel = getOption("mc.cores"))
+  })
+    
+  
+  # LIMMA #
+  
+  # observe({
+  #   updateSelectInput(session, "limmaColunm",
+  #                     choices = colnames(meta(datasetInput())))
+  # })
+  
+  # fitModel <- reactive({
+  #   pseq <- datasetInput() # Rename the example data
+  #   otu <- abundances(microbiome::transform(pseq, "log10"))
+  #   meta <- meta(pseq)
+  #   design <- cbind(intercept = 1, Grp2vs1 = meta[[input$limmaColumn]])
+  #   rownames(design) <- rownames(meta)
+  #   design <- design[colnames(otu), ]
+  #   coef.index <- 2
+  #   fit <- lmFit(otu, design)
+  #   fit <- eBayes(fit)
+  #   pvalues.limma = fit$p.value[, 2]
+  #   efs.limma <-  fit$coefficients[, "Grp2vs1"]
+  #   kable(topTable(fit, coef = coef.index, p.value=0.1), digits = 2)
+  # })
+  # 
+  # output$limmaTable <- renderDT({
+  #   fitModel()
+  # })
+  
 }
 
 # Run the application
