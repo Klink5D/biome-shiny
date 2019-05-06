@@ -505,14 +505,20 @@ ui <- dashboardPage(
     ),
     tabItem(
       tabName = "dirichlet",
-      box( title = "Variables", width = "2", collapsible = TRUE, collapsed = TRUE,
-           selectInput("datasetDMM","Choose the dataset to analyze.",
-                       choices = c("dietswap","atlas1006","peerj32")),
-           numericInput("detectionDMM", label="Input detection threshold for DMM", min = 0, max = 100, step = 0.1, value = "0.1"),
-           numericInput("prevalenceDMM", label="Input prevalence percentage of samples for DMM0", min = 0, max = 100, step = 0.1, value = "50"),
-           numericInput("maxModelsDMM", label="Input maximum number of community types for the DMM model, or leave empty for infinite types at the cost of performance.", value = "3")
-      ),
+      # box( title = "Variables", width = "2", collapsible = TRUE, collapsed = TRUE,
+      #      numericInput("detectionDMM", label="Input detection threshold for DMM", min = 0, max = 100, step = 0.1, value = "0.1"),
+      #      numericInput("prevalenceDMM", label="Input prevalence percentage of samples for DMM0", min = 0, max = 100, step = 0.1, value = "50"),
+      #      numericInput("maxModelsDMM", label="Input maximum number of community types for the DMM model, or leave empty for infinite types at the cost of performance.", value = "3")
+      # ),
       tabsetPanel(
+        tabPanel("Variables",
+                 box( title = "Variables", width = "2", collapsible = TRUE,
+                      numericInput("detectionDMM", label="Input detection threshold for DMM", min = 0, max = 100, step = 0.1, value = "0.1"),
+                      numericInput("prevalenceDMM", label="Input prevalence percentage of samples for DMM0", min = 0, max = 100, step = 0.1, value = "50"),
+                      numericInput("maxModelsDMM", label="Input maximum number of community types for the DMM model, or leave empty for infinite types at the cost of performance.", value = "3")
+                 )
+        ),
+        
         tabPanel("Model Verification Lineplot",
                  plotOutput("dmmModelCheck")
         ),
@@ -529,31 +535,96 @@ ui <- dashboardPage(
     ),
     tabItem(
       tabName = "permanova",
-      box( title = "Variables", width = "2", collapsible = TRUE, collapsed = TRUE,
-           selectInput("permanovaDistanceMethod","Select distance method", choices = c("bray","jacard","unifrac"), selected = "unifrac"),
-           selectInput("permanovaMethod","Select ordination method",
-                       choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
-                       selected = "CCA"),
-           selectInput("permanovaColumn","Select metadata for density plot", choices = colnames("datasetMetadata")),
-           sliderInput("permanovaPlotSize", "Plot point size", min = 0.5, max = 10, step = 0.5, value = "3"),
-           numericInput("permanovaPermutations", "Number of permutations", min = 1, step = 1, value = 99)
-      ),
+      # box( title = "Variables", width = "2", collapsible = TRUE, collapsed = TRUE,
+      #      selectInput("permanovaDistanceMethod","Select distance method", choices = c("bray","jacard","unifrac"), selected = "unifrac"),
+      #      selectInput("permanovaMethod","Select ordination method",
+      #                  choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
+      #                  selected = "CCA"),
+      #      selectInput("permanovaColumn","Select metadata for density plot", choices = colnames("datasetMetadata")),
+      #      sliderInput("permanovaPlotSize", "Plot point size", min = 0.5, max = 10, step = 0.5, value = "3"),
+      #      numericInput("permanovaPermutations", "Number of permutations", min = 1, step = 1, value = 99)
+      # ),
       tabsetPanel(
         tabPanel( title = "Population density plot",
-           plotlyOutput("densityPlot")
+           tabsetPanel(
+              tabPanel(title = "Variables",
+                box( title = "Variables", width= "2", collapsible = TRUE,
+                     selectInput("permanovaDistanceMethod","Select distance method", choices = c("bray","jacard","unifrac"), selected = "unifrac"),
+                     selectInput("permanovaMethod","Select ordination method",
+                                 choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
+                                 selected = "CCA"),
+                     selectInput("permanovaColumn","Select metadata for density plot", choices = colnames("datasetMetadata")),
+                     sliderInput("permanovaPlotSize", "Plot point size", min = 0.5, max = 10, step = 0.5, value = "3")
+                )
+              ),
+              tabPanel(title = "Plot", plotlyOutput("densityPlot"))
+           )
         ),
         tabPanel( title = "P-Value",
+           tabsetPanel(
+             tabPanel(title = "Variables",
+                      box( title = "Variables", width= "2", collapsible = TRUE,
+                           selectInput("permanovaDistanceMethodP","Select distance method", choices = c("bray","jacard","unifrac"), selected = "unifrac"),
+                           selectInput("permanovaMethodP","Select ordination method",
+                                       choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
+                                       selected = "CCA"),
+                           selectInput("permanovaColumnP","Select metadata for density plot", choices = colnames("datasetMetadata")),
+                           numericInput("permanovaPermutationsP", "Number of permutations", min = 1, step = 1, value = 99)
+                      )              
+            ),
+             tabPanel(title = "Data Tables",
                   dataTableOutput("pValue"),
                   dataTableOutput("homogeniety")
+             )
+           )
         ),
         tabPanel ( title = "Top Factors",
-                   plotOutput("topFactorPlot") 
+          tabsetPanel(
+            tabPanel(title = "Variables",
+                     box( title = "Variables", width= "2", collapsible = TRUE,
+                          selectInput("permanovaDistanceMethodFac","Select distance method", choices = c("bray","jacard","unifrac"), selected = "unifrac"),
+                          selectInput("permanovaColumnFac","Select metadata for density plot", choices = colnames("datasetMetadata")),
+                          numericInput("permanovaPermutationsFac", "Number of permutations", min = 1, step = 1, value = 99)
+                      )              
+            ),
+            tabPanel(title = "Plot",
+                   plotOutput("topFactorPlot")
+            )
+          )
         ),
         tabPanel ( title = "Network Plot",
-                   plotlyOutput("netPlot")
+          tabsetPanel(
+            tabPanel(title = "Variables",
+                     box( title = "Variables", width= "2", collapsible = TRUE,
+                          selectInput("permanovaDistanceMethodNet","Select distance method", choices = c("bray","jacard","unifrac"), selected = "unifrac"),
+                          selectInput("permanovaMethodNet","Select ordination method",
+                                      choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
+                                      selected = "CCA"),
+                          sliderInput("permanovaPlotSizeNet", "Plot point size", min = 0.5, max = 10, step = 0.5, value = "3"),
+                          numericInput("permanovaPermutationsNet", "Number of permutations", min = 1, step = 1, value = 99)
+                      )
+            ),
+            tabPanel(title ="Plot",
+                     plotlyOutput("netPlot")
+            )
+          )
         ),
         tabPanel ( title = "Heatmap",
+            tabsetPanel(
+              tabPanel(title = "Variables",
+                       box( title = "Variables", width= "2", collapsible = TRUE,
+                            selectInput("permanovaDistanceMethodHeat","Select distance method", choices = c("bray","jacard","unifrac"), selected = "unifrac"),
+                            selectInput("permanovaMethodHeat","Select ordination method",
+                                        choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
+                                        selected = "CCA"),
+                            numericInput("permanovaPermutationsHeat", "Number of permutations", min = 1, step = 1, value = 99)
+                        )              
+                       
+              ),
+              tabPanel(title = "Plot",
                    plotlyOutput("permaHeatmap")
+              ) 
+          )
         )
       )
       ),
@@ -1065,35 +1136,35 @@ server <- function(input, output, session) {
   observe({
     updateSelectInput(session, "permanovaColumn",
                       choices = colnames(meta(datasetInput())))
+    updateSelectInput(session, "permanovaColumnP",
+                      choices = colnames(meta(datasetInput())))
+    updateSelectInput(session, "permanovaColumnFac",
+                      choices = colnames(meta(datasetInput())))
   })
   
   permanova <- reactive({
     otu <- abundances(compositionalInput())
     meta <- meta(compositionalInput())
-    permnumber <- input$permanovaPermutations
-    metadata <- input$permanovaColumn
+    permnumber <- input$permanovaPermutationsP
+    metadata <- input$permanovaColumnP
     adonis(t(otu) ~ meta[[metadata]],
                         data = meta, permutations = permnumber, method = "bray", parallel = getOption("mc.cores")
     )
   })
   
-  output$permaprint <- renderText({
-      print(abundances(compositionalInput()))
-      print(meta(datasetInput()))
-      print(typeof(input$permanovaColumn))
-      print(typeof(meta(datasetInput())$sex))
-      print(input$permanovaPermutations)
-  })
+  # output$permaprint <- renderText({
+  #     print(abundances(compositionalInput()))
+  #     print(meta(datasetInput()))
+  #     print(typeof(input$permanovaColumn))
+  #     print(typeof(meta(datasetInput())$sex))
+  #     print(input$permanovaPermutations)
+  # })
   
   output$densityPlot <- renderPlotly({
     p <- plot_landscape(compositionalInput(), method = input$permanovaMethod, distance = input$permanovaDistanceMethod, col = input$permanovaColumn, size = input$permanovaPlotSize)
     plotly_build(p)
   })
-  
-  # output$pValue <- renderPrint({
-  #   as.data.frame(permanova()$aov.tab)[paste0('"',input$permanovaColumn,'"'), "Pr(>F)"]
-  # })
-  
+
   output$pValue <- renderDataTable({
     as.data.frame(permanova()$aov.tab)
   })
@@ -1102,15 +1173,15 @@ server <- function(input, output, session) {
     otu <- abundances(compositionalInput())
     meta <- meta(compositionalInput())
     dist <- vegdist(t(otu))
-    metadata <- input$permanovaColumn
+    metadata <- input$permanovaColumnP
     anova(betadisper(dist, meta[[metadata]]))
   })
   
   output$topFactorPlot <- renderPlot({
     otu <- abundances(compositionalInput())
     meta <- meta(compositionalInput())
-    permnumber <- input$permanovaPermutations
-    metadata <- input$permanovaColumn
+    permnumber <- input$permanovaPermutationsFac
+    metadata <- input$permanovaColumnFac
     column <- meta[[metadata]]
     permanova <- adonis(t(otu) ~ column,
            data = meta, permutations = permnumber, method = "bray"
@@ -1123,13 +1194,13 @@ server <- function(input, output, session) {
   })
   
   output$netPlot <- renderPlotly({
-    n <- make_network(compositionalInput(), type = "otu", distance = "bray")
+    n <- make_network(compositionalInput(), type = "otu", distance = input$permanovaDistanceMethodNet)
     p <- plot_network(n)
     plotly_build(p)  
   })
   
   output$permaHeatmap <- renderPlotly({
-    p <- plot_heatmap(compositionalInput(), distance = ordinate(compositionalInput(), distance = input$ordinate.distance), method = input$ordinate.method)
+    xp <- plot_heatmap(compositionalInput(), distance = ordinate(compositionalInput(), distance = input$permanovaDistanceMethodHeat), method = input$permanovaMethodHeat)
     plotly_build(p)
   })
   
