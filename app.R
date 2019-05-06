@@ -1,8 +1,10 @@
-# Biome-shiny 0.4
+  # Biome-shiny 0.4
 
 # For Permanova
   # 1. Make it so that it takes a distance matrix (output from beta diversity?) instead of abundances
   # Which implies making it so Beta Diversity outputs a distance matrix on user input.
+# Kind of done
+
 
 library(shiny)
 library(shinydashboard)
@@ -48,7 +50,7 @@ ui <- dashboardPage(
       br(),
       paste0("Statistical analysis"),
       menuItem("PERMANOVA", tabName = "permanova"),
-      menuItem("ANOSIM", tabName = "anosim"),
+      # menuItem("ANOSIM", tabName = "anosim"),
       br(),
       paste0("Outputs and Results"),
       menuItem("Results", tabName = "results")
@@ -224,20 +226,20 @@ ui <- dashboardPage(
     # Alpha Diversity #
     tabItem(
       tabName = "alphadiversity",
-      box(
-        width = "2",
-        collapsible = TRUE,
-        title = "Variables",
-        collapsed = TRUE,
-        # #X (the metadata) and Y (the diversity measure)
-        selectInput(
-          "x",
-          "Choose a metadata column test:",
-          choices = colnames("datasetMetadata")
-        ),
-        selectInput("y", "Choose a diversity measure:",
-                    choices = colnames("datasetMetadata"))
-      ),
+      # box(
+      #   width = "2",
+      #   collapsible = TRUE,
+      #   title = "Variables",
+      #   collapsed = TRUE,
+      #   # #X (the metadata) and Y (the diversity measure)
+      #   selectInput(
+      #     "x",
+      #     "Choose a metadata column test:",
+      #     choices = colnames("datasetMetadata")
+      #   ),
+      #   selectInput("y", "Choose a diversity measure:",
+      #               choices = colnames("datasetMetadata"))
+      # ),
       br(),
       tabsetPanel(
         type = "tabs",
@@ -253,79 +255,221 @@ ui <- dashboardPage(
                  DT::dataTableOutput("view")),
         
         # Tab 3: The exceptionally lewd Violin Plots
-        tabPanel(title = "Violin Plot",
-                 plotlyOutput("violinPlot")),
+        tabPanel(
+              title = "Violin Plot",
+            tabsetPanel(
+              tabPanel(title = "Variables",
+              box(
+                width = "2",
+                collapsible = TRUE,
+                title = "Variables",
+                collapsed = TRUE,
+                # #X (the metadata) and Y (the diversity measure)
+                selectInput(
+                  "x",
+                  "Choose a metadata column test:",
+                  choices = colnames("datasetMetadata")
+                ),
+                selectInput("y", "Choose a diversity measure:",
+                            choices = colnames("datasetMetadata"))
+              )),
+              tabPanel(title = "Plot", plotlyOutput("violinPlot")))),
         
         # Tab 4: A phyloseq richness plot
         tabPanel(title = "Richness Plot",
-                 plotlyOutput("richnessPlot"))
+                 tabsetPanel(
+                  tabPanel( title = "Variables",
+                     box(
+                       width = "2",
+                       collapsible = TRUE,
+                       title = "Variables",
+                       collapsed = TRUE,
+                       # #X (the metadata) and Y (the diversity measure)
+                       selectInput(
+                         "x2",
+                         "Choose a metadata column test:",
+                         choices = colnames("datasetMetadata")
+                       )
+                     ),
+                     box(checkboxGroupInput("richnessChoices", "Choose diversity measures" ,choices = c("Observed", "Chao1", "ACE", "Shannon", "Simpson", "InvSimpson", "Fisher"), selected = c("Shannon", "Simpson")))),
+                 tabPanel( title = "Plot",
+                  plotlyOutput("richnessPlot"))))
       )
     ),
     
     #Beta diversity#
     tabItem(
       tabName = "betadiversity",
-      box(
-        title = "Variables",
-        width = "2",
-        collapsible = TRUE,
-        collapsed = TRUE,
-        selectInput(
-          "xb", "Choose a metadata column:", choices = colnames("datasetMetadata"), selected = "bmi_group"
-        ),
-        
-        selectInput(
-          "yb",
-          "For metadata/metadata split plots, choose a metadata column:",
-          choices = colnames("datasetMetadata"),
-          selected = "bmi_group"
-        ),
-        
-        selectInput(
-          "zb",
-          "For metadata/tax rank split plot, choose a taxonomy rank:",
-          choices = c("Phylum", "Class", "Order", "Family", "Genus")
-        ),
-        
-        selectInput(
-          "ordinate.method",
-          "Choose an ordination method:",
-          choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
-          selected = "CCA"
-        ),
-        
-        selectInput(
-          "ordinate.distance",
-          "Choose a distance method:",
-          choices = c("bray", "jaccard", "unifrac"),
-          selected = "unifrac"
-        ),
-        #There's 44 of these in total
-        
-        sliderInput(
-          "geom.size",
-          "Plot geometry point size:",
-          min = 1,
-          max = 10,
-          step = 0.5,
-          value = "3"
-        )
-      ),
-      
+      # box(
+      #   title = "Variables",
+      #   width = "2",
+      #   collapsible = TRUE,
+      #   collapsed = TRUE,
+      #   selectInput(
+      #     "xb", "Choose a metadata column:", choices = colnames("datasetMetadata"), selected = "bmi_group"
+      #   ),
+      #   
+      #   selectInput(
+      #     "yb",
+      #     "For metadata/metadata split plots, choose a metadata column:",
+      #     choices = colnames("datasetMetadata"),
+      #     selected = "bmi_group"
+      #   ),
+      #   
+      #   selectInput(
+      #     "zb",
+      #     "For tax rank plot, choose a taxonomy rank:",
+      #     choices = c("Phylum", "Class", "Order", "Family", "Genus")
+      #   ),
+      #   
+      #   selectInput(
+      #     "ordinate.method",
+      #     "Choose an ordination method:",
+      #     choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
+      #     selected = "CCA"
+      #   ),
+      #   
+      #   selectInput(
+      #     "ordinate.distance",
+      #     "Choose a distance method:",
+      #     choices = c("bray", "jaccard", "unifrac"),
+      #     selected = "unifrac"
+      #   ),
+      #   #There's 44 of these in total
+      #   
+      #   sliderInput(
+      #     "geom.size",
+      #     "Plot geometry point size:",
+      #     min = 1,
+      #     max = 10,
+      #     step = 0.5,
+      #     value = "3"
+      #   )
+      #),
       tabsetPanel(
         tabPanel(title = "Ordination Plot",
-                 plotlyOutput("ordinatePlot"),
-                 textOutput("ordinatePrint")
-                ),
+                 tabsetPanel(
+                   tabPanel(title = "Variables",
+                            box(
+                              title = "Variables",
+                              width = "2",
+                              collapsible = TRUE,
+                              collapsed = TRUE,
+                              selectInput(
+                                "xb", "Choose a metadata column:", choices = colnames("datasetMetadata"), selected = "bmi_group"
+                              ),
+                              selectInput(
+                                "ordinate.method",
+                                "Choose an ordination method:",
+                                choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
+                                selected = "CCA"
+                              ),
+                              selectInput(
+                                "ordinate.distance",
+                                "Choose a distance method:",
+                                choices = c("bray", "jaccard", "unifrac"),
+                                selected = "unifrac"
+                              ),
+                              sliderInput(
+                                "geom.size",
+                                "Plot geometry point size:",
+                                min = 1,
+                                max = 10,
+                                step = 0.5,
+                                value = "3"
+                              )                            
+                   )),
+                   tabPanel(title = "Plot",
+                            plotlyOutput("ordinatePlot"),
+                            textOutput("ordinatePrint"))
+                   )),
         
         tabPanel(title = "Split Ordination Plot (Metadata/Metadata)",
-                 plotlyOutput("splitOrd")),
+                 tabsetPanel(
+                   tabPanel(title = "Variables",
+                            box(
+                              title = "Variables",
+                              width = "2",
+                              collapsible = TRUE,
+                              collapsed = TRUE,
+                              selectInput(
+                                "xb2", "Choose a metadata column:", choices = colnames("datasetMetadata"), selected = "bmi_group"
+                              ),
+                              
+                              selectInput(
+                                "yb",
+                                "For metadata/metadata split plots, choose a metadata column:",
+                                choices = colnames("datasetMetadata"),
+                                selected = "bmi_group"
+                              ),
+                              
+                              selectInput(
+                                "ordinate.method2",
+                                "Choose an ordination method:",
+                                choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
+                                selected = "CCA"
+                              ),
+                              
+                              selectInput(
+                                "ordinate.distance2",
+                                "Choose a distance method:",
+                                choices = c("bray", "jaccard", "unifrac"),
+                                selected = "unifrac"
+                              ),
+                              #There's 44 of these in total
+                              
+                              sliderInput(
+                                "geom.size2",
+                                "Plot geometry point size:",
+                                min = 1,
+                                max = 10,
+                                step = 0.5,
+                                value = "3"
+                              )          
+                  )),
+                 tabPanel( title = "Plot", plotlyOutput("splitOrd")))),
         
         tabPanel(title = "Taxa Plot",
-                 plotlyOutput("taxaOrd"))
-      )
-      
-    ),
+                 tabsetPanel(
+                   tabPanel( title = "Variables",
+                             box(
+                               title = "Variables",
+                               width = "2",
+                               collapsible = TRUE,
+                               collapsed = TRUE,
+                               selectInput(
+                                 "xb3", "Choose a metadata column:", choices = colnames("datasetMetadata"), selected = "bmi_group"
+                               ),
+                               selectInput(
+                                 "zb",
+                                 "For tax rank plot, choose a taxonomy rank:",
+                                 choices = c("Phylum", "Class", "Order", "Family", "Genus")
+                               ),
+                               selectInput(
+                                 "ordinate.method3",
+                                 "Choose an ordination method:",
+                                 choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
+                                 selected = "CCA"
+                               ),
+                               selectInput(
+                                 "ordinate.distance3",
+                                 "Choose a distance method:",
+                                 choices = c("bray", "jaccard", "unifrac"),
+                                 selected = "unifrac"
+                               ),
+                               sliderInput(
+                                 "geom.size3",
+                                 "Plot geometry point size:",
+                                 min = 1,
+                                 max = 10,
+                                 step = 0.5,
+                                 value = "3"
+                               )
+                    )),
+                   tabPanel(title = "Plot", plotlyOutput("taxaOrd"))
+              )
+          )
+    )),
     
     tabItem(
        tabName = "landscaping",
@@ -435,10 +579,15 @@ ui <- dashboardPage(
     #   ),
     
     tabItem(tabName = "results"
+          
+            #Pick format - html, pdf
+            #Just download images - png, jpg
+            
       )
     )
   )
 )
+
 
 # Server
 server <- function(input, output, session) {
@@ -603,6 +752,7 @@ server <- function(input, output, session) {
   observe({
     updateSelectInput(session, "x",
                       choices = colnames(meta(datasetInput())))
+    updateSelectInput(session, "x2", choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "y",
                       choices = colnames(alpha(datasetInput())))
   })
@@ -620,7 +770,7 @@ server <- function(input, output, session) {
   output$view <-
     DT::renderDataTable({
       #Issue with search -> search by specific term (like "male") doesn't work -> causes problem when searching between female (which gives all female samples) and male (which give both male and female samples). Still, a slightly dysfunctional search function is better than none at all
-      datatable(mergedTable())
+      datatable(mergedTable(),options = list(scrollX = TRUE))
     })
   
   # Violin plot #
@@ -640,9 +790,9 @@ server <- function(input, output, session) {
   output$richnessPlot <- renderPlotly({
     richnessplot <- plot_richness(
       datasetInput(),
-      x = input$x,
-      measures = c("Shannon", "Simpson"),
-      color = input$x
+      x = input$x2,
+      measures = input$richnessChoices,
+      color = input$x2
     )
     plotly_build(richnessplot)
   })
@@ -678,6 +828,10 @@ server <- function(input, output, session) {
   observe({
     updateSelectInput(session, "xb",
                       choices = colnames(meta(datasetInput())))
+    updateSelectInput(session, "xb2",
+                      choices = colnames(meta(datasetInput())))
+    updateSelectInput(session, "xb3",
+                      choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "yb",
                       choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "zb",
@@ -693,12 +847,28 @@ server <- function(input, output, session) {
       compositionalInput(),
       method = input$ordinate.method,
       distance = input$ordinate.distance
-    ) #note to self, make method choosable from dropdown
+    )
   })
   
-  output$ordinatePrint <- renderPrint({
-    ordinateData()
+  ordinateDataSplit <- reactive({
+    ordinate(
+      compositionalInput(),
+      method = input$ordinate.method2,
+      distance = input$ordinate.distance2
+    )
   })
+  
+  ordinateDataTaxa <- reactive({
+    ordinate(
+      compositionalInput(),
+      method = input$ordinate.method3,
+      distance = input$ordinate.distance3
+    )
+  })
+   
+  # output$ordinatePrint <- renderPrint({
+  #   ordinateData()
+  # })
   
   output$ordinatePlot <- renderPlotly({
     p <- phyloseq::plot_ordination(datasetInput(), ordinateData(), color = input$xb ) + geom_point(size = input$geom.size)
@@ -709,12 +879,12 @@ server <- function(input, output, session) {
     splitOrdplot <-
       plot_ordination(
         datasetInput(),
-        ordinateData(),
+        ordinateDataSplit(),
         type = "split",
         shape = input$xb,
         color = input$yb,
-        label = input$zb
-      )
+        label = input$yb
+      ) + geom_point(size = input$geom.size2)
     plotly_build(splitOrdplot)
   })
   
@@ -722,11 +892,11 @@ server <- function(input, output, session) {
     taxaOrdplot <-
       plot_ordination(
         datasetInput(),
-        ordinateData(),
+        ordinateDataTaxa(),
         type = "taxa",
         color = input$zb,
         label = input$xb
-      )
+      ) + geom_point(size = input$geom.size3)
     plotly_build(taxaOrdplot)
   })
   
@@ -960,29 +1130,29 @@ server <- function(input, output, session) {
   
   output$permaHeatmap <- renderPlotly({
     p <- plot_heatmap(compositionalInput(), distance = ordinate(compositionalInput(), distance = input$ordinate.distance), method = input$ordinate.method)
-    plotly_build(p, color = meta[[metadata]])
+    plotly_build(p)
   })
   
   # ANOSIM #
   #Update metadata column#
-  observe({
-    updateSelectInput(session, "anosimColumn",
-                      choices = colnames(meta(datasetInput())))
-  })
-  
-  anosim <- reactive({
-    otu <- abundances(compositionalInput())
-    meta <- meta(compositionalInput())
-    permnumber <- input$anosimPermutations
-    metadata <- input$anosimColumn
-  })
-  
-  output$pValueAnosim <- renderPrint({
-    otu <- abundances(compositionalInput())
-    meta <- meta(compositionalInput())
-    metadata <- input$anosimColumn
-    vegan::anosim(otu, meta[[metadata]], permutations = 99, distance = "bray", parallel = getOption("mc.cores"))
-  })
+  # observe({
+  #   updateSelectInput(session, "anosimColumn",
+  #                     choices = colnames(meta(datasetInput())))
+  # })
+  # 
+  # anosim <- reactive({
+  #   otu <- abundances(compositionalInput())
+  #   meta <- meta(compositionalInput())
+  #   permnumber <- input$anosimPermutations
+  #   metadata <- input$anosimColumn
+  # })
+  # 
+  # output$pValueAnosim <- renderPrint({
+  #   otu <- abundances(compositionalInput())
+  #   meta <- meta(compositionalInput())
+  #   metadata <- input$anosimColumn
+  #   vegan::anosim(otu, meta[[metadata]], permutations = 99, distance = "bray", parallel = getOption("mc.cores"))
+  # })
     
   
   # LIMMA #
