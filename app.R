@@ -117,36 +117,63 @@ ui <- dashboardPage(
     # Core microbiota #
     tabItem(
       tabName = "coremicrobiota",
-      box(
-        title = "Variables",
-        width = "2",
-        collapsible = TRUE,
-        collapsed = TRUE,
-        
-        numericInput("detectionPrevalence", "For prevalences: Choose detection value", min = 0.00, max = 100, value = 0.01, step = 0.01),
-        numericInput("prevalencePrevalence","Input a prevalence value", min = 0, max = 1, value = 0.5, step = 0.05),
-        selectInput("prevalenceSelection", multiple = TRUE, selectize = TRUE, choices = c(seq(0,1,by=0.01)), label = "Choose prevalence values for lineplot and heatmap"),
-        textInput("detectionForLineplot", label = "Enter detection values, separated by comma, for the lineplot"),
-        textInput("detectionMin", label = "Enter minimum limit for detection"),
-        textInput("detectionMax", label = "Enter maximum limit for detection"),
-        textInput("maxLength", label = "Enter length (number of values)")
-      ),
+      # box(
+      #   title = "Variables",
+      #   width = "2",
+      #   collapsible = TRUE,
+      #   collapsed = TRUE,
+      #   
+        #numericInput("detectionPrevalence", "For prevalences: Choose detection value", min = 0.00, max = 100, value = 0.01, step = 0.01),
+        # numericInput("prevalencePrevalence","Input a prevalence value", min = 0, max = 1, value = 0.5, step = 0.05),
+        # selectInput("prevalenceSelection", multiple = TRUE, selectize = TRUE, choices = c(seq(0,1,by=0.01)), label = "Choose prevalence values for lineplot and heatmap"),
+        # textInput("detectionForLineplot", label = "Enter detection values, separated by comma, for the lineplot"),
+        # textInput("detectionMin", label = "Enter minimum limit for detection"),
+        # textInput("detectionMax", label = "Enter maximum limit for detection"),
+        # textInput("maxLength", label = "Enter length (number of values)")
+      # ),
       
       tabsetPanel(
-        tabPanel("Prevalence (relative)",
+        tabPanel("Prevalence (absolute/relative)",
                  # Output the prevalence in relatives and absolutes (Counts)
-                 dataTableOutput("prevalenceRelativeOutput")
-        ),
-        tabPanel("Prevalence (absolute)",
-                 dataTableOutput("prevalenceAbsoluteOutput")
+          tabsetPanel(
+            tabPanel("Variables",
+              box( width ="2", collapsible = TRUE,
+                numericInput("detectionPrevalence", "For prevalences: Choose detection value", min = 0.00, max = 100, value = 0.01, step = 0.01)              
+              )
+            ),
+            tabPanel("Absolute prevalence", dataTableOutput("prevalenceAbsoluteOutput")),
+            tabPanel("Relative prevalence", dataTableOutput("prevalenceRelativeOutput"))
+          )
         ),
         tabPanel("Core Taxa Summary",
-                 verbatimTextOutput("corePhyloSummary"),
-                 verbatimTextOutput("coreTaxa")
+          tabsetPanel(
+            tabPanel("Variables",
+                     numericInput("detectionPrevalence2", "For prevalences: Choose detection value", min = 0.00, max = 100, value = 0.01, step = 0.01),
+                     numericInput("prevalencePrevalence","Input a prevalence value", min = 0, max = 1, value = 0.5, step = 0.05)
+            ),
+            tabPanel("Summary", verbatimTextOutput("corePhyloSummary")),
+            tabPanel("Taxa", verbatimTextOutput("coreTaxa"))
+          )
         ),
         tabPanel("Core Taxa Visualization",
-                 plotlyOutput("coreLineplot"),
-                 plotlyOutput("coreHeatmap")
+            tabsetPanel(
+              tabPanel("Variables (Lineplot)",
+                 box(width = "2", collapsible = TRUE,
+                   selectInput("prevalenceSelection", multiple = TRUE, selectize = TRUE, choices = c(seq(0,1,by=0.01)), label = "Choose prevalence values for lineplot"),
+                   textInput("detectionForLineplot", label = "Enter detection values, separated by comma, for the lineplot")
+                 )
+              ),
+              tabPanel("Variables (Heatmap)",
+                 box(width = "2", collapsible = TRUE,
+                     selectInput("prevalenceSelectionHeat", multiple = TRUE, selectize = TRUE, choices = c(seq(0,1,by=0.01)), label = "Choose prevalence values for heatmap"),
+                     textInput("detectionMin", label = "Enter minimum limit for detection"),
+                     textInput("detectionMax", label = "Enter maximum limit for detection"),
+                     numericInput("maxLength", label = "Enter length (number of values)", min = "1", value= "10")
+                )
+              ),
+              tabPanel("Lineplot", plotlyOutput("coreLineplot")),
+              tabPanel("Heatmap", plotlyOutput("coreHeatmap"))
+            )
         )
       )
     ),
@@ -155,71 +182,159 @@ ui <- dashboardPage(
     # Community composition #
     tabItem(
       tabName = "communitycomposition",
-      box(
-        title = "Variables",
-        width = "2",
-        collapsible = TRUE,
-        collapsed = TRUE,
-        selectInput(
-          "z1",
-          "Choose a metadata column:",
-          # For subsetting data, #1
-          choices = colnames("datasetMetadata"),
-          selected = "bmi_group"
-        ),
-        selectInput(
-          "v1",
-          "Choose a metadata value:",
-          # For subsetting data, metadata value
-          choices = sapply("datasetMetadata", levels),
-          selected = "lean"
-        ),
-        selectInput(
-          "z2",
-          "Choose a seocond metadata column:",
-          # For subsetting data, #2
-          choices = colnames("datasetMetadata"),
-          selected = "nationality"
-        ),
-        selectInput(
-          "v2",
-          "Choose a second metadata value:",
-          # For subsetting data, metadata #2 value
-          choices = sapply("datasetMetadata", levels),
-          selected = "AAM"
-        ),
-        selectInput(
-          "z3",
-          "Choose the intended timepoint:",
-          # For subsetting data, timepoint data
-          choices = colnames("datasetMetadata"),
-          selected = "timepoint.within.group"
-        ),
-        selectInput(
-          "v3",
-          "Choose a timepoint value:",
-          # For subsetting data, timepoint data value
-          choices = c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"),
-          selected = "1"
-        ),
-        selectInput(
-          "v4",
-          "Choose a taxonomy rank:",
-          # Tax rank to analyze
-          choices = c("Phylum", "Class", "Order", "Family", "Genus"),
-          selected = "Phylum"
-        )
-      ),
-      
+      # box(
+      #   title = "Variables",
+      #   width = "2",
+      #   collapsible = TRUE,
+      #   collapsed = TRUE,
+      #   selectInput(
+      #     "z1",
+      #     "Choose a metadata column:",
+      #     # For subsetting data, #1
+      #     choices = colnames("datasetMetadata"),
+      #     selected = "bmi_group"
+      #   ),
+      #   selectInput(
+      #     "v1",
+      #     "Choose a metadata value:",
+      #     # For subsetting data, metadata value
+      #     choices = sapply("datasetMetadata", levels),
+      #     selected = "lean"
+      #   ),
+      #   selectInput(
+      #     "z2",
+      #     "Choose a seocond metadata column:",
+      #     # For subsetting data, #2
+      #     choices = colnames("datasetMetadata"),
+      #     selected = "nationality"
+      #   ),
+      #   selectInput(
+      #     "v2",
+      #     "Choose a second metadata value:",
+      #     # For subsetting data, metadata #2 value
+      #     choices = sapply("datasetMetadata", levels),
+      #     selected = "AAM"
+      #   ),
+      #   selectInput(
+      #     "z3",
+      #     "Choose the intended timepoint:",
+      #     # For subsetting data, timepoint data
+      #     choices = colnames("datasetMetadata"),
+      #     selected = "timepoint.within.group"
+      #   ),
+      #   selectInput(
+      #     "v3",
+      #     "Choose a timepoint value:",
+      #     # For subsetting data, timepoint data value
+      #     choices = c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"),
+      #     selected = "1"
+      #   ),
+      #   selectInput(
+      #     "v4",
+      #     "Choose a taxonomy rank:",
+      #     # Tax rank to analyze
+      #     choices = c("Phylum", "Class", "Order", "Family", "Genus"),
+      #     selected = "Phylum"
+      #   )
+      # ),
       tabsetPanel(
         tabPanel(title = "Abundance in samples by taxa",
-                 plotOutput("communityPlot")),
+          tabsetPanel(       
+                 tabPanel("Variables",
+                          box(
+                            title = "Data Subsetting",
+                            width = "2",
+                            collapsible = TRUE,
+                            selectInput(
+                              "z1",
+                              "Choose a metadata column:",
+                              # For subsetting data, #1
+                              choices = colnames("datasetMetadata"),
+                              selected = "bmi_group"
+                            ),
+                            selectInput(
+                              "z2",
+                              "Choose a seocond metadata column:",
+                              # For subsetting data, #2
+                              choices = colnames("datasetMetadata"),
+                              selected = "nationality"
+                            ),
+                            selectInput(
+                              "z3",
+                              "Choose the intended timepoint (if applicable):",
+                              # For subsetting data, timepoint data
+                              choices = colnames("datasetMetadata"),
+                              selected = "timepoint.within.group"
+                            )
+                          ),
+                          box("Metadata Values", width = "2", collapsible = TRUE,
+                              selectInput(
+                                "v1",
+                                "Choose a metadata value:",
+                                # For subsetting data, metadata value
+                                choices = sapply("datasetMetadata", levels),
+                                selected = "lean"
+                              ),
+                              selectInput(
+                                "v2",
+                                "Choose a second metadata value:",
+                                # For subsetting data, metadata #2 value
+                                choices = sapply("datasetMetadata", levels),
+                                selected = "AAM"
+                              ),
+                              selectInput(
+                                "v3",
+                                "Choose a timepoint value (if applicable):",
+                                # For subsetting data, timepoint data value
+                                choices = c("","0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"),
+                                selected = "1"
+                              ),
+                              selectInput(
+                                "v4",
+                                "Choose a taxonomy rank:",
+                                # Tax rank to analyze
+                                choices = c("Phylum", "Class", "Order", "Family", "Genus"),
+                                selected = "Phylum"
+                              )
+                          )
+                 ),
+                 tabPanel("Plot", plotOutput("communityPlot"))
+                 )
+          ),
         tabPanel(title = "Relative abundance",
                  plotOutput("communityPlotGenus")),
-        tabPanel(title = "Community Plot #3",
-                 plotOutput("communityBarplot")),
+        tabPanel(title = "Relative abundance, averaged by metadata",
+          tabsetPanel(
+            tabPanel("Variables",
+                  box(width = "2", collapsible = TRUE,
+                     selectInput(
+                       "z1Average",
+                       "Choose a metadata column for averaging:",
+                       # For subsetting data, #1
+                       choices = colnames("datasetMetadata"),
+                       selected = "bmi_group"
+                     ),
+                     selectInput(
+                       "plotTypeZ1Average",
+                       "Plot type:",
+                       choices = c("barplot","heatmap"),
+                       selected = "barplot"
+                     )
+                  )
+            ),
+             tabPanel("Plot", plotOutput("communityBarplot"))
+          )
+        ),
         tabPanel(title = "Taxonomy Prevalence Plot",
-                 plotlyOutput("communityPrevalence"))
+           tabsetPanel(
+              tabPanel("Variables",
+                box(title = "Taxonomy rank", collapsible = TRUE, width = "2",
+                  selectInput("v4Plot", label = "Choose a taxonomy rank", choices = c("Phylum", "Class", "Order", "Family", "Genus"), selected = "Phylum")
+                )
+              ),
+              tabPanel("Plot", plotlyOutput("communityPrevalence"))
+          )
+        )
       )
     ),
     
@@ -473,25 +588,46 @@ ui <- dashboardPage(
     
     tabItem(
        tabName = "landscaping",
-       box(title = "Variables", width = "2", collapsible = TRUE, collapsed = TRUE,
-           selectInput("ordinateMethodLandscape", "Choose an ordination method:", 
-                       choices=c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"), selected = "CCA"),
-           selectInput("ordinateDistanceLandscape", "Choose a distance method:", 
-                       choices=c("bray","jaccard","unifrac"), selected = "unifrac"), #There's 44 of these in total
-           numericInput("detectionLandscape", label="Input detection threshold for landscape analysis", min = 0, max = 100, step = 0.1, value = "0.1"),
-           numericInput("prevalenceLandscape", label="Input prevalence percentage of samples for landscape analysis", min = 0, max = 100, step = 0.1, value = "50"),
-           selectInput("metadataLandscape1", "Choose first metadata column to subset data:", choices=colnames("datasetMetadata")),
-           selectInput("metadataLandscapeValue1", "Choose first metadata value:", choices=sapply("datasetMetadata", levels)),
-           selectInput("metadataLandscape2", "Choose second metadata column to subset data:", choices=colnames("datasetMetadata")),
-           selectInput("metadataLandscapeValue2", "Choose second metadata value:", choices=sapply("datasetMetadata", levels))
-       ),
+       # box(title = "Variables", width = "2", collapsible = TRUE, collapsed = TRUE,
+       #     selectInput("ordinateMethodLandscape", "Choose an ordination method:", 
+       #                 choices=c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"), selected = "CCA"),
+       #     selectInput("ordinateDistanceLandscape", "Choose a distance method:", 
+       #                 choices=c("bray","jaccard","unifrac"), selected = "unifrac"), #There's 44 of these in total
+       #     numericInput("detectionLandscape", label="Input detection threshold for landscape analysis", min = 0, max = 100, step = 0.1, value = "0.1"),
+       #     numericInput("prevalenceLandscape", label="Input prevalence percentage of samples for landscape analysis", min = 0, max = 100, step = 0.1, value = "50"),
+       #     selectInput("metadataLandscape1", "Choose first metadata column to subset data:", choices=colnames("datasetMetadata")),
+       #     selectInput("metadataLandscapeValue1", "Choose first metadata value:", choices=sapply("datasetMetadata", levels)),
+       #     selectInput("metadataLandscape2", "Choose second metadata column to subset data:", choices=colnames("datasetMetadata")),
+       #     selectInput("metadataLandscapeValue2", "Choose second metadata value:", choices=sapply("datasetMetadata", levels))
+       # ),
        tabsetPanel(
          tabPanel("PCA",
                   plotlyOutput("landscapePCA")
          ),
          tabPanel("PCoA/MDS/NMDS",
-                  plotlyOutput("landscapeOrdination"),
-                  plotlyOutput("landscapeOrdinationSamplenames")
+            tabsetPanel(
+              tabPanel("Variables",
+                       box("Data Subsetting", width = "2", collapsible = TRUE,
+                           numericInput("detectionLandscape", label="Input detection threshold for landscape analysis", min = 0, max = 100, step = 0.1, value = "0.1"),
+                           numericInput("prevalenceLandscape", label="Input prevalence percentage of samples for landscape analysis", min = 0, max = 100, step = 0.1, value = "50")
+                           ),
+                       box("Data Subsetting", width = "2", collapsible = TRUE,
+                           selectInput("metadataLandscape1", "Choose first metadata column to subset data:", choices=colnames("datasetMetadata")),
+                           selectInput("metadataLandscapeValue1", "Choose first metadata value:", choices=sapply("datasetMetadata", levels)),
+                           selectInput("metadataLandscape2", "Choose second metadata column to subset data:", choices=colnames("datasetMetadata")),
+                           selectInput("metadataLandscapeValue2", "Choose second metadata value:", choices=sapply("datasetMetadata", levels))                    
+                       ),
+                       box(title = "Variables", width = "2", collapsible = TRUE,
+                           selectInput("ordinateMethodLandscape", "Choose an ordination method:", 
+                                       choices=c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"), selected = "CCA"),
+                           selectInput("ordinateDistanceLandscape", "Choose a distance method:", 
+                                       choices=c("bray","jaccard","unifrac"), selected = "unifrac")
+                           )
+                        ),
+              tabPanel("Plot", plotlyOutput("landscapeOrdination")
+              #,plotlyOutput("landscapeOrdinationSamplenames")
+              )
+            )
          ),
          tabPanel("t-SNE",
                   plotlyOutput("landscapeTSne")
@@ -698,7 +834,7 @@ server <- function(input, output, session) {
   
   # Core analysis
   corePhylo <- reactive({ # Generates a phyloseq file from input
-    core(compositionalInput(), detection = input$detectionPrevalence, prevalence = input$prevalencePrevalence )
+    core(compositionalInput(), detection = input$detectionPrevalence2, prevalence = input$prevalencePrevalence )
   })
   output$corePhyloSummary <- renderPrint({ # Summary of corePhylo file
     summarize_phyloseq(corePhylo())  
@@ -718,7 +854,7 @@ server <- function(input, output, session) {
   
   output$coreHeatmap <- renderPlotly({
     # Core with compositionals:
-    prevalences <- as.numeric(input$prevalenceSelection)
+    prevalences <- as.numeric(input$prevalenceSelectionHeat)
     detections <- 10^seq(log10(as.numeric(input$detectionMin)), log10(as.numeric(input$detectionMax)), length = as.numeric(input$maxLength))
     gray <- gray(seq(0,1,length=5))
     coreplot <- plot_core(compositionalInput(), plot.type = "heatmap", colours = gray, prevalences = prevalences, detections = detections, min.prevalence = .5) + xlab("Detection Threshold (Relative Abundance (%))")
@@ -738,6 +874,10 @@ server <- function(input, output, session) {
     updateSelectInput(session, "z3",
                       choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "v4",
+                      choices = colnames(tax_table(datasetInput())))
+    updateSelectInput(session, "z1Average",
+                      choices = colnames(meta(datasetInput())))
+    updateSelectInput(session, "v4Plot",
                       choices = colnames(tax_table(datasetInput())))
   })
   
@@ -794,24 +934,33 @@ server <- function(input, output, session) {
         x = "Samples",
         y = "Relative abundance (%)",
         title = "Relative abundance data",
-        subtitle = "Subtitle",
-        caption = "Caption text."
+        subtitle = "Subtitle", #make it user input
+        caption = "Caption text." #Ditto
       ) +
       theme_ipsum(grid = "Y")
     print(compositionplot)
     #plotly_build(compositionplot)
   })
   
-  # Barplot, averaged by z1 group - replace with user pick later
+  # Barplot, averaged by z1Average group
   output$communityBarplot <- renderPlot({
-    compplot <- plot_composition(datasetSubsetInput(), average_by = input$z1, plot.type = "barplot")
+    compplot <- plot_composition(datasetSubsetInput(), average_by = input$z1Average, plot.type = input$plotTypeZ1Average )
     print(compplot)
     #plotly_build(compplot)
   })
   
   # And top it off with a taxa prevalence plot
   output$communityPrevalence <- renderPlotly({
-    prevplot <- plot_taxa_prevalence(datasetSubsetInput(), input$v4) #Can be changed to whatever taxonomic rank the input files have
+    subset1 <-
+      prune_samples(sample_data(datasetInput())[[input$z1]] == input$v1, datasetInput())
+    subset1 <-
+      prune_samples(sample_data(subset1)[[input$z2]] == input$v2, subset1)
+    subset1 <-
+      prune_samples(sample_data(subset1)[[input$z3]] == input$v3, subset1)
+    subset2 <-
+      prune_samples(sample_data(subset1)[[input$z1]] == input$v1, subset1) %>% aggregate_taxa(level = input$v4Plot)
+    data <- microbiome::transform(subset2, "compositional")
+    prevplot <- plot_taxa_prevalence(data, input$v4 ) #Can be changed to whatever taxonomic rank the input files have
     plotly_build(prevplot)
   })
   
@@ -995,8 +1144,8 @@ server <- function(input, output, session) {
   
   # 1 - Select the column 
   datasetSubsetLandscape <- reactive({
-    subset <- prune_samples(sample_data(datasetInput())[[input$metadataLandscape1]] == input$metadataLandscapeValue1, datasetInput())
-    subset <- prune_samples(sample_data(subset)[[input$metadataLandscape2]] == input$metadataLandscapeValue2, subset)
+    subset1 <- prune_samples(sample_data(datasetInput())[[input$metadataLandscape1]] == input$metadataLandscapeValue1, datasetInput())
+    subset <- prune_samples(sample_data(subset1)[[input$metadataLandscape2]] == input$metadataLandscapeValue2, subset1)
     microbiome::transform(subset, "compositional")
   })
   
@@ -1008,28 +1157,36 @@ server <- function(input, output, session) {
     plotly_build(p)
   })
   
-  #NMDS/PCoa/MDS
+  #PCoA/MDS
+  output$landscapePCoAMDS <- renderPlotly({
+    p <- plot_landscape(datasetSubsetLandscape,
+                        method = "PCoA", distance = "bray") +
+      labs(title = paste("PCoA / Compositional / Bray-Curtis"))
+    plotly_build(p)
+  })
+  
+  #NMDS
   output$landscapeOrdination <- renderPlotly({
     x <- datasetInput()
     quiet(x.ord <- ordinate(x, input$ordinateMethodLandscape, input$ordinateDistanceLandscape))
     proj <- phyloseq::plot_ordination(x, x.ord, justDF=TRUE)
     names(proj)[1:2] <- paste("Comp", 1:2, sep=".")
-    p <- plot_landscape(proj[, 1:2], col = proj$nationality, legend = T)
+    p <- plot_landscape(proj[, 1:2], col = proj[[input$metadataLandscape1]], add.points = TRUE, legend = TRUE)
     plotly_build(p)
   })
-  output$landscapeOrdinationSamplenames <- renderPlotly({
-    x <- datasetInput()
-    quiet(x.ord <- ordinate(x, input$ordinateMethodLandscape, input$ordinateDistanceLandscape))
-    proj <- phyloseq::plot_ordination(x, x.ord, justDF=TRUE)
-    names(proj)[1:2] <- paste("Comp", 1:2, sep=".")
-    ax1 <- names(proj)[[1]]
-    ax2 <- names(proj)[[2]]
-    p <- ggplot(aes_string(x = ax1, y = ax2, label = "sample"), data = proj) +
-      geom_text(size = 2)
-    plotly_build(p)
-  })
+  # output$landscapeOrdinationSamplenames <- renderPlotly({
+  #   x <- datasetInput()
+  #   quiet(x.ord <- ordinate(x, input$ordinateMethodLandscape, input$ordinateDistanceLandscape))
+  #   proj <- phyloseq::plot_ordination(x, x.ord, justDF=TRUE)
+  #   names(proj)[1:2] <- paste("Comp", 1:2, sep=".")
+  #   ax1 <- names(proj)[[1]]
+  #   ax2 <- names(proj)[[2]]
+  #   p <- ggplot(aes_string(x = ax1, y = ax2, label = "sample"), data = proj) +
+  #     geom_text(size = 2)
+  #   plotly_build(p)
+  # })
   
-  #
+  #t-SNE
   output$landscapeTSne <- renderPlotly({
     p <- plot_landscape(datasetInput(), "t-SNE",
                    distance = "euclidean", transformation = "hellinger") +
@@ -1037,6 +1194,7 @@ server <- function(input, output, session) {
     plotly_build(p)
   })
   
+  #Abundance histogram (Absolute/Relative)
   output$landscapeAbundanceHistAbs <- renderPlotly({
     # Visualize population densities for specific taxa
     p <- plot_density(datasetInput(), "Dialister") + ggtitle("Absolute abundance")
@@ -1045,9 +1203,7 @@ server <- function(input, output, session) {
   
   output$landscapeAbundanceHistRel <- renderPlotly({
     # Visualize population densities for specific taxa
-    x <- microbiome::transform(datasetInput(), "compositional")
-    tax <- "Dialister"
-    p <- plot_density(x, tax, log10 = TRUE) +
+    p <- plot_density(compositionalInput(), "Dialister", log10 = TRUE) +
       ggtitle("Relative abundance") +
       xlab("Relative abundance (%)")
     plotly_build(p)
