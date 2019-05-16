@@ -1,0 +1,38 @@
+---
+title: "Alpha Diversity"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(shiny)
+library(shinydashboard)
+library(microbiome)
+library(phyloseq)
+library(DT)
+library(ggplot2)
+library(plotly)
+library(knitr)
+library(dplyr)
+library(ggpubr)
+library(hrbrthemes)
+library(reshape2)
+library(DirichletMultinomial)
+library(vegan)
+```
+
+
+```{r phylosummary, echo=FALSE}
+if (input$printSummary == "Yes"){
+  summaryParams()
+}
+```
+```{r richness, echo=FALSE}
+if( input$renderRichness == "Yes"){
+  richnessPlotParams()
+}
+```
+```{r mergedtable, echo=FALSE}
+if(input$printTableAlpha == "Yes"){
+  head(melt(mergedTable()))
+}
+```

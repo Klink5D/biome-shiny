@@ -1,0 +1,38 @@
+---
+title: "Beta Diversity"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(shiny)
+library(shinydashboard)
+library(microbiome)
+library(phyloseq)
+library(DT)
+library(ggplot2)
+library(plotly)
+library(knitr)
+library(dplyr)
+library(ggpubr)
+library(hrbrthemes)
+library(reshape2)
+library(DirichletMultinomial)
+library(vegan)
+```
+
+
+```{r phylosummary, echo=FALSE}
+if (input$renderOrdplot == "Yes"){
+  ordinatePlotParams()
+}
+```
+```{r richness, echo=FALSE}
+if( input$renderSplitOrdplot == "Yes"){
+  splitOrdParams()
+}
+```
+```{r mergedtable, echo=FALSE}
+if(input$renderTaxaplot == "Yes"){
+  taxaOrdParams()
+}
+```

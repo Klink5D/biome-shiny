@@ -1,0 +1,57 @@
+---
+title: "PERMANOVA"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(shiny)
+library(shinydashboard)
+library(microbiome)
+library(phyloseq)
+library(DT)
+library(ggplot2)
+library(plotly)
+library(knitr)
+library(dplyr)
+library(ggpubr)
+library(hrbrthemes)
+library(reshape2)
+library(DirichletMultinomial)
+library(vegan)
+```
+
+
+```{r densityplot, echo=FALSE}
+if (input$renderDensityPlot == "Yes"){
+  landscapePCAParams()
+}
+```
+
+```{r pvalue, echo=FALSE}
+if( input$renderPValueTables == "Yes"){
+  as.data.frame(permanova()$aov.tab)
+}
+```
+
+```{r homogeniety, echo=FALSE}
+if( input$renderPValueTables == "Yes"){
+  homogenietyParams()}
+```
+
+```{r topfactor, echo=FALSE}
+if(input$renderFactorPlot == "Yes"){
+ topFactorPlotParams()
+}
+```
+
+```{r netplot, echo=FALSE}
+if(input$renderNetworkMap == "Yes"){
+  netPlotParams()
+}
+```
+
+```{r heatmap, echo=FALSE}
+if(input$renderHeatmap == "Yes"){
+  permaHeatmapParams()
+}
+```

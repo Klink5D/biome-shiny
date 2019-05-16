@@ -1,0 +1,44 @@
+---
+title: "Core Microbiota"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(shiny)
+library(shinydashboard)
+library(microbiome)
+library(phyloseq)
+library(DT)
+library(ggplot2)
+library(plotly)
+library(knitr)
+library(dplyr)
+library(ggpubr)
+library(hrbrthemes)
+library(reshape2)
+library(DirichletMultinomial)
+library(vegan)
+```
+
+
+```{r phylosummary, echo=FALSE}
+if (input$renderPrevTables == "Yes"){
+  prevalenceAbsolute()
+  prevalenceRelative()
+}
+```
+```{r taxasum, echo=FALSE}
+if( input$renderCoreTaxaSummary == "Yes"){
+  summarize_phyloseq(corePhylo()) 
+}
+```
+```{r corelineplot, echo=FALSE}
+if(input$renderCoreLineplot == "Yes"){
+  coreLineplotParams()
+}
+```
+```{r taxaplot, echo=FALSE}
+if(input$renderCoreHeatmap == "Yes"){
+  coreHeatmapParams()
+}
+```

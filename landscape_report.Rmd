@@ -1,0 +1,53 @@
+---
+title: "Community Landscape"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(shiny)
+library(shinydashboard)
+library(microbiome)
+library(phyloseq)
+library(DT)
+library(ggplot2)
+library(plotly)
+library(knitr)
+library(dplyr)
+library(ggpubr)
+library(hrbrthemes)
+library(reshape2)
+library(DirichletMultinomial)
+library(vegan)
+```
+
+
+```{r pca, echo=FALSE}
+if (input$renderPCA == "Yes"){
+  landscapePCAParams()
+}
+```
+```{r pcoamds, echo=FALSE}
+if( input$renderPCOAMDS == "Yes"){
+  landscapePCoAMDSParams()
+}
+```
+```{r tsne, echo=FALSE}
+if(input$renderTSNE == "Yes"){
+  landscapeTSneParams()
+}
+```
+```{r nmds, echo=FALSE}
+if(input$renderTSNE == "Yes"){
+  landscapeOrdinationParams()
+}
+```
+```{r count, echo=FALSE}
+if(input$renderAbundanceHistograms == "Yes"){
+  landscapeAbundanceHistAbsParams()
+}
+```
+```{r abundance, echo=FALSE}
+if(input$renderAbundanceHistograms == "Yes"){
+  landscapeAbundanceHistRelParams()
+}
+```
