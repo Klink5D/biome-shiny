@@ -1,19 +1,23 @@
-# biome-shiny
+# Biome-shiny
 ##  A Shiny R app for microbiome analysis, built around the "microbiome" package
 
-In essence, this app is a student project designed to create a semi or fully-automatic, easy to use pipeline, that could potentially be used by people with little knowledge of coding or bioinformatics.
+Biome-shiny is an application that provides a simple, easy-to-use interface to visualize and analyze microbiomes through (mostly) interactive plots, and export the results to a file.
+It was built using the Shiny library, and draws most of its features from the "microbiome" library.
 
-It also serves as a way for me to further my own knowledge on the creation of pipelines, microbiome analyses, the Shiny library for R and the R language as a whole.
+Current features include:
+	Viewing core microbiota
+	Community composition	
+	Alpha and Beta Diversity
+	Community landscape
+	DMM clustering
+	PERMANOVA
+	
 
-*What it can do right now:*
+The app accepts a phyloseq-style .biom file with metadata as an input, but can also use the sample datasets from the microbiome package for testing purposes.
 
-Alpha Diversity displays a phyloseq summary of the input dataset (right now, one of the three sample sets available from the microbiome package). It displays a table containing the phyloseq file's metadata, as well as a series of diversity measures. Finally, it displays results in a visual form through a violin plot.
+Tutorial coming soon
 
-Beta Diversity displays a series of ordination plots (two split, one not split) based around user input, and allows the user to set a unique seed for outcome replication, if necessary.
 
-Community Composition takes the user's input to display a variety of abundance plots: abundance by subject, relative abundance data and a taxa prevalence plot.
-
-The app is in very early stages and thus is extremely buggy and unfit for any actual work. I would hope that by the end, it'll be a functional, user-friendly app that allows even those with little bioinformatics knowledge to perform a thorough microbiome analysis without having to go look through heaps of documentation.
 
 Citations:
 
