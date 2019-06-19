@@ -19,16 +19,42 @@ library(reshape2)
 library(DirichletMultinomial)
 library(vegan)
 ```
-
-
+```{r, echo=FALSE}
+if (input$renderOrdplot == "Yes"){
+  ordinateDataCodeParams()
+}
+```
+```{r, echo=FALSE}
+if (input$renderOrdplot == "Yes"){
+  ordinatePlotCodeParams()
+}
+```
 ```{r phylosummary, echo=FALSE}
 if (input$renderOrdplot == "Yes"){
   ordinatePlotParams()
 }
 ```
+```{r, echo=FALSE}
+if( input$renderSplitOrdplot == "Yes"){
+  ordinateDataSplitCodeParams()
+}
+```
+```{r, echo=FALSE}
+splitOrdCodeParams()
+```
 ```{r richness, echo=FALSE}
 if( input$renderSplitOrdplot == "Yes"){
   splitOrdParams()
+}
+```
+```{r, echo=FALSE}
+if(input$renderTaxaplot == "Yes"){
+  ordinateDataTaxaCodeParams()
+}
+```
+```{r, echo=FALSE}
+if(input$renderTaxaplot == "Yes"){
+  taxaOrdCodeParams()
 }
 ```
 ```{r mergedtable, echo=FALSE}

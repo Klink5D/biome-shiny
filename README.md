@@ -15,8 +15,6 @@ Current features include:
 
 The app accepts a phyloseq-style .biom file with metadata as an input, but can also use the sample datasets from the microbiome package for testing purposes.
 
-
-
 Tutorial coming soon
 
 

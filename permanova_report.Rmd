@@ -20,16 +20,46 @@ library(DirichletMultinomial)
 library(vegan)
 ```
 
+```{r, echo=FALSE}
+permanovaCode1()
+```
+```{r, echo=FALSE}
+permanovaCode2()
+```
+```{r, echo=FALSE}
+permanovaCode3()
+```
+```{r, echo=FALSE}
+permanovaCode4()
+```
+```{r, echo=FALSE}
+permanovaCode5()
+```
+
 
 ```{r densityplot, echo=FALSE}
 if (input$renderDensityPlot == "Yes"){
-  landscapePCAParams()
+  densityPlotParams()
 }
 ```
-
+```{r, echo=FALSE}
+if (input$renderDensityPlot == "Yes"){
+  densityPlotCodeParams1()
+}
+```
+```{r, echo=FALSE}
+if (input$renderDensityPlot == "Yes"){
+  densityPlotCodeParams2()
+}
+```
 ```{r pvalue, echo=FALSE}
 if( input$renderPValueTables == "Yes"){
   as.data.frame(permanova()$aov.tab)
+}
+```
+```{r, echo=FALSE}
+if( input$renderPValueTables == "Yes"){
+  pValueCode()
 }
 ```
 
@@ -37,10 +67,50 @@ if( input$renderPValueTables == "Yes"){
 if( input$renderPValueTables == "Yes"){
   homogenietyParams()}
 ```
+```{r, echo=FALSE}
+if( input$renderPValueTables == "Yes"){
+  homogenietyCodeParams1()
+}
+```
+```{r, echo=FALSE}
+if( input$renderPValueTables == "Yes"){
+  homogenietyCodeParams2()
+}
+```
+```{r, echo=FALSE}
+if( input$renderPValueTables == "Yes"){
+  homogenietyCodeParams3()
+}
+```
+```{r, echo=FALSE}
+if( input$renderPValueTables == "Yes"){
+  homogenietyCodeParams4()
+}
+```
+```{r, echo=FALSE}
+if( input$renderPValueTables == "Yes"){
+  homogenietyCodeParams5()
+}
+```
+```{r, echo=FALSE}
+if( input$renderPValueTables == "Yes"){
+ homogenietyCodeParams6() 
+}
+```
 
 ```{r topfactor, echo=FALSE}
 if(input$renderFactorPlot == "Yes"){
  topFactorPlotParams()
+}
+```
+```{r, echo=FALSE}
+if(input$renderFactorPlot == "Yes"){
+  topFactorPlotCodeParams1()
+}
+```
+```{r, echo=FALSE}
+if(input$renderFactorPlot == "Yes"){
+  topFactorPlotCodeParams2()
 }
 ```
 
@@ -49,9 +119,35 @@ if(input$renderNetworkMap == "Yes"){
   netPlotParams()
 }
 ```
+```{r, echo=FALSE}
+if(input$renderNetworkMap == "Yes"){
+  netPlotCodeParams1()
+}
+```
+```{r, echo=FALSE}
+if(input$renderNetworkMap == "Yes"){
+  netPlotCodeParams2()
+}
+```
+```{r, echo=FALSE}
+if(input$renderNetworkMap == "Yes"){
+  netPlotCodeParams3()
+}
+```
 
 ```{r heatmap, echo=FALSE}
 if(input$renderHeatmap == "Yes"){
   permaHeatmapParams()
 }
 ```
+```{r, echo=FALSE}
+if(input$renderHeatmap == "Yes"){
+  permaHeatmapCode1()
+}
+```
+```{r, echo=FALSE}
+if(input$renderHeatmap == "Yes"){
+  permaHeatmapCode2()
+}
+```
+

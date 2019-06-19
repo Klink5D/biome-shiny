@@ -24,12 +24,20 @@ library(vegan)
 ```{r phylosummary, echo=FALSE}
 if (input$renderPrevTables == "Yes"){
   prevalenceAbsolute()
+  prevalenceAbsoluteCode()
   prevalenceRelative()
+  prevalenceRelativeCode()
+}
+```
+```{r, echo=FALSE}
+if( input$renderCoreTaxaSummary == "Yes"){
+  corePhyloCode()
 }
 ```
 ```{r taxasum, echo=FALSE}
 if( input$renderCoreTaxaSummary == "Yes"){
-  summarize_phyloseq(corePhylo()) 
+  summarize_phyloseq(corePhylo())
+  corePhyloSummaryCode()
 }
 ```
 ```{r corelineplot, echo=FALSE}
@@ -37,8 +45,55 @@ if(input$renderCoreLineplot == "Yes"){
   coreLineplotParams()
 }
 ```
+```{r, echo=FALSE}
+if(input$renderCoreLineplot == "Yes"){
+  coreLineplotCodeParams1()
+}
+```
+```{r, echo=FALSE}
+if(input$renderCoreLineplot == "Yes"){
+  coreLineplotCodeParams2()
+}
+```
+```{r, echo=FALSE}
+if(input$renderCoreLineplot == "Yes"){
+  coreLineplotCodeParams3()
+}
+```
+```{r, echo=FALSE}
+if(input$renderCoreLineplot == "Yes"){
+  coreLineplotCodeParams4()
+}
+```
+
 ```{r taxaplot, echo=FALSE}
 if(input$renderCoreHeatmap == "Yes"){
   coreHeatmapParams()
 }
 ```
+```{r, echo=FALSE}
+if(input$renderCoreHeatmap == "Yes"){
+  coreHeatmapCodeParams1()
+}
+```
+```{r, echo=FALSE}
+if(input$renderCoreHeatmap == "Yes"){
+  coreHeatmapCodeParams2()
+}
+```
+```{r, echo=FALSE}
+if(input$renderCoreHeatmap == "Yes"){
+  coreHeatmapCodeParams3()
+}
+```
+```{r, echo=FALSE}
+if(input$renderCoreHeatmap == "Yes"){
+  coreHeatmapCodeParams4()
+}
+```
+```{r, echo=FALSE}
+if(input$renderCoreHeatmap == "Yes"){
+  coreHeatmapCodeParams5()
+}
+```
+

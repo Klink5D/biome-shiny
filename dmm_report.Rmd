@@ -20,20 +20,107 @@ library(DirichletMultinomial)
 library(vegan)
 ```
 
+```{r, echo=FALSE}
+dmmModelFitCode1()
+```
+```{r, echo=FALSE}
+dmmModelFitCode2()
+```
+```{r, echo=FALSE}
+dmmModelFitCode3()
+```
+```{r, echo=FALSE}
+dmmModelFitCode4()
+```
+```{r, echo=FALSE}
+dmmModelFitCode5()
+```
 
 ```{r check, echo=FALSE}
 if (input$renderModelVerification == "Yes"){
   dmmModelCheckParams()
 }
 ```
+```{r, echo=FALSE}
+if (input$renderModelVerification == "Yes"){
+dmmModelCheckCodeParams1()
+}
+```
+```{r, echo=FALSE}
+if (input$renderModelVerification == "Yes"){
+dmmModelCheckCodeParams2()
+}
+```
+```{r, echo=FALSE}
+if (input$renderModelVerification == "Yes"){
+dmmModelCheckCodeParams3()
+}
+```
+```{r, echo=FALSE}
+if (input$renderModelVerification == "Yes"){
+dmmModelCheckCodeParams4()
+}
+```
+```{r, echo=FALSE}
+if (input$renderModelVerification == "Yes"){
+dmmModelCheckCodeParams5()
+}
+```
+```{r, echo=FALSE}
+if (input$renderModelVerification == "Yes"){
+dmmModelCheckCodeParams6()
+}
+```
+
 ```{r fit, echo=FALSE}
 if( input$renderParameters == "Yes"){
   mixturewt(dmmModelBestFit())
 }
 ```
+```{r, echo=FALSE}
+if( input$renderParameters == "Yes"){
+  dmmModelBestFitCode4()
+}
+```
+```{r, echo=FALSE}
+if( input$renderParameters == "Yes"){
+  dmmParametersCode()
+}
+```
+
 ```{r taxacont, echo=FALSE}
 if(input$renderTaxaContributionPlot == "Yes"){
   taxaContributionPerComponentParams()
+}
+```
+```{r, echo=FALSE}
+if(input$renderTaxaContributionPlot == "Yes"){
+  taxaContributionPerComponentCodeParams1()
+}
+```
+```{r, echo=FALSE}
+if(input$renderTaxaContributionPlot == "Yes"){
+  taxaContributionPerComponentCodeParams2()
+}
+```
+```{r, echo=FALSE}
+if(input$renderTaxaContributionPlot == "Yes"){
+  taxaContributionPerComponentCodeParams3()
+}
+```
+```{r, echo=FALSE}
+if(input$renderTaxaContributionPlot == "Yes"){
+  taxaContributionPerComponentCodeParams4()
+}
+```
+```{r, echo=FALSE}
+if(input$renderTaxaContributionPlot == "Yes"){
+  taxaContributionPerComponentCodeParams5()
+}
+```
+```{r, echo=FALSE}
+if(input$renderTaxaContributionPlot == "Yes"){
+  taxaContributionPerComponentCodeParams6()
 }
 ```
 

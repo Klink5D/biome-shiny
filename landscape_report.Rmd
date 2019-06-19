@@ -26,9 +26,19 @@ if (input$renderPCA == "Yes"){
   landscapePCAParams()
 }
 ```
+```{r, echo=FALSE}
+if (input$renderPCA == "Yes"){
+  landscapePCACodeParams()
+}
+```
 ```{r pcoamds, echo=FALSE}
 if( input$renderPCOAMDS == "Yes"){
-  landscapePCoAMDSParams()
+  landscapeOrdinationParams()
+}
+```
+```{r, echo=FALSE}
+if( input$renderPCOAMDS == "Yes"){
+  landscapeOrdinationCodeParams()
 }
 ```
 ```{r tsne, echo=FALSE}
@@ -38,7 +48,7 @@ if(input$renderTSNE == "Yes"){
 ```
 ```{r nmds, echo=FALSE}
 if(input$renderTSNE == "Yes"){
-  landscapeOrdinationParams()
+  landscapeTSneCodeParams()
 }
 ```
 ```{r count, echo=FALSE}
@@ -46,8 +56,19 @@ if(input$renderAbundanceHistograms == "Yes"){
   landscapeAbundanceHistAbsParams()
 }
 ```
+```{r, echo=FALSE}
+if(input$renderAbundanceHistograms == "Yes"){
+  landscapeAbundanceHistAbsCodeParams()
+}
+```
 ```{r abundance, echo=FALSE}
 if(input$renderAbundanceHistograms == "Yes"){
   landscapeAbundanceHistRelParams()
 }
 ```
+```{r, echo=FALSE}
+if(input$renderAbundanceHistograms == "Yes"){
+  landscapeAbundanceHistRelCodeParams()
+}
+```
+

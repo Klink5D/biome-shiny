@@ -1,10 +1,4 @@
-    # Biome-shiny 0.4
-
-# For Permanova
-  # 1. Make it so that it takes a distance matrix (output from beta diversity?) instead of abundances
-  # Which implies making it so Beta Diversity outputs a distance matrix on user input.
-# Kind of done
-
+# Biome-shiny 0.6
 
 library(shiny)
 library(shinydashboard)
@@ -32,7 +26,7 @@ peerj32 <- peerj32$phyloseq
 
 # UI
 ui <- dashboardPage(
-  dashboardHeader(title = "biome-shiny v0.4"),
+  dashboardHeader(title = "biome-shiny v0.6"),
   dashboardSidebar(
     sidebarMenu(
       menuItem(
@@ -40,6 +34,7 @@ ui <- dashboardPage(
         tabName = "intro",
         icon = icon("dashboard")
       ),
+      menuItem("Phyloseq Summary", tabName="phyloseqsummary"),
       br(),
       paste0("Microbiome analysis"),
       menuItem("Core microbiota", tabName = "coremicrobiota"),
@@ -73,7 +68,7 @@ ui <- dashboardPage(
       h1("Introduction to biome-shiny"),
       br(),
       box(
-        width = "2",
+        width = "3",
         radioButtons(
           "datasetChoice",
           "Dataset",
@@ -86,7 +81,7 @@ ui <- dashboardPage(
             "dataset",
             "Please upload a dataset:",
             multiple = TRUE,
-            accept = ".biom"
+            accept = c("text/biom"), placeholder="Phyloseq .biom files"
           )
         ),
         conditionalPanel(
@@ -102,16 +97,14 @@ ui <- dashboardPage(
         paste0(
           "biome-shiny is a microbiome analysis pipeline developed with the Shiny library for R, and based, primarily, on the \"microbiome\" and \"phyloseq\" libraries for analysis.\n\n\n\nBiome-shiny is being developed by BioData.pt for ELIXIR."
         )
-      )#, #Test variables please ignore
-      # box(title = "Test Box",
-      #   paste0("Phyloseq summary"),
-      #   verbatimTextOutput("testOutput"),
-      #   paste0("RadioButtons tests"),
-      #   verbatimTextOutput("testOutput2"),
-      #   paste0("Uploaded file stuff"),
-      #   verbatimTextOutput("testOutput3")
-      # )
+      )
     ),
+    
+    tabItem(tabName = "phyloseqsummary",
+            h1("Phyloseq Summary"),
+            verbatimTextOutput("summary")
+    ),
+    
     
     # Core microbiota #
     tabItem(
@@ -303,38 +296,38 @@ ui <- dashboardPage(
       tabsetPanel(
         type = "tabs",
         id = "tabsetpanel",
+      
+        tabPanel(title = "Evenness Table",
+                 dataTableOutput("evennessTable")),
+        tabPanel(title = "Abundance Table",
+                 dataTableOutput("abundanceTable")),        
         
-        # Tab 1: Phyloseq summary
-        tabPanel(title = "Phyloseq Summary",
-                 verbatimTextOutput("summary")),
-        
-        
-        # Tab 2: Alpha diversity measures with metadata
-        tabPanel(title = "Table",
+        # Alpha diversity measures with metadata
+        tabPanel(title = "Metadata Table with diversity measures",
                  DT::dataTableOutput("view")),
         
-        # Tab 3: The exceptionally lewd Violin Plots
-        tabPanel(
-              title = "Violin Plot",
-            tabsetPanel(
-              tabPanel(title = "Variables",
-              box(
-                width = "2",
-                collapsible = TRUE,
-                title = "Variables",
-                collapsed = TRUE,
-                # #X (the metadata) and Y (the diversity measure)
-                selectInput(
-                  "x",
-                  "Choose a metadata column test:",
-                  choices = colnames("datasetMetadata")
-                ),
-                selectInput("y", "Choose a diversity measure:",
-                            choices = colnames("datasetMetadata"))
-              )),
-              tabPanel(title = "Plot", plotlyOutput("violinPlot")))),
+        # # Violin Plots
+        # tabPanel(
+        #       title = "Violin Plot",
+        #     tabsetPanel(
+        #       tabPanel(title = "Variables",
+        #       box(
+        #         width = "2",
+        #         collapsible = TRUE,
+        #         title = "Variables",
+        #         collapsed = TRUE,
+        #         # #X (the metadata) and Y (the diversity measure)
+        #         selectInput(
+        #           "x",
+        #           "Choose a metadata column test:",
+        #           choices = colnames("datasetMetadata")
+        #         ),
+        #         selectInput("y", "Choose a diversity measure:",
+        #                     choices = colnames("datasetMetadata"))
+        #       )),
+        #       tabPanel(title = "Plot", plotlyOutput("violinPlot")))),
         
-        # Tab 4: A phyloseq richness plot
+        # A phyloseq richness plot
         tabPanel(title = "Richness Plot",
                  tabsetPanel(
                   tabPanel( title = "Variables",
@@ -652,18 +645,6 @@ ui <- dashboardPage(
       ),
     tabItem(tabName = "results",
        tabsetPanel(
-         tabPanel("Select Categories",
-            box(title = "Reports", collapsible = TRUE,
-              checkboxInput("coremicrobiotaCheck", "Enable Core Microbiota Report"),
-              checkboxInput("communitycompositionCheck", "Enable Community Composition Report"),
-              checkboxInput("alphadiversityCheck", "Enable Alpha Diversity Report", value = TRUE ),
-              checkboxInput("betadiversityCheck", "Enable Beta Diversity Report"),
-              checkboxInput("landscapingCheck", "Enable Community Landscape Report"),
-              checkboxInput("dirichletCheck", "Enable DMM Clustering Report"),
-              checkboxInput("permanovaCheck", "Enable PERMANOVA Report"),
-              actionButton("checkAll", "Check All")
-            )
-          ),
          tabPanel("Category Options",
            tabsetPanel(
              tabPanel("Core Microbiota",
@@ -671,12 +652,11 @@ ui <- dashboardPage(
                       radioButtons("renderPrevTables", "Render Prevalence Tables", choices = c("Yes", "No")),
                       radioButtons("renderCoreTaxaSummary", "Render Core Taxa Summary", choices = c("Yes", "No")),
                       radioButtons("renderCoreLineplot", "Render Core Taxa Lineplot", choices = c("Yes", "No")),
-                      radioButtons("renderCoreHeatmap", "Render Core Taxa Heatmap", choices = c("Yes", "No")),
-                      radioButtons("dumpCodeCoreMicro", "Dump Plot and Summary code", choices = c("Yes","No"))
+                      radioButtons("renderCoreHeatmap", "Render Core Taxa Heatmap", choices = c("Yes", "No"))
                     ),
                     box(
                       paste0("Format, button to download as format"),
-                      radioButtons('format', 'Document format', c('HTML', 'PDF'),
+                      radioButtons('format', 'Document format', c('HTML'),
                                    inline = TRUE, selected = 'HTML'),
                       downloadButton('downloadReportCoreMicro')
                     )
@@ -690,22 +670,21 @@ ui <- dashboardPage(
                     ),
                     box(title = "Download Options",
                         paste0("Format, button to download as format"),
-                        radioButtons('format', 'Document format', c('HTML', 'PDF'),
+                        radioButtons('format', 'Document format', c('HTML'),
                                      inline = TRUE, selected = 'HTML'),
                         downloadButton('downloadReportComposition')
                     )
              ),
              tabPanel("Alpha Diversity",
                 box(
-                  radioButtons("renderViolin", "Render Violin Plot", choices = c("Yes", "No")),
+                  #radioButtons("renderViolin", "Render Violin Plot", choices = c("Yes", "No")),
                   radioButtons("renderRichness", "Render Richness Plot", choices = c("Yes", "No")),
                   radioButtons("printTableAlpha", "Print Table Head", choices = c("Yes", "No")),
-                  radioButtons("printSummary", "Print Phyloseq Summary", choices = c("Yes", "No")),
-                  radioButtons("dumpCodeAlpha", "Dump Plot and Summary Code", choices = c("Yes", "No"))
+                  radioButtons("printSummary", "Print Phyloseq Summary", choices = c("Yes", "No"))
                 ),
                 box(title = "Download Options",
                     paste0("Format, button to download as format"),
-                    radioButtons('format', 'Document format', c('HTML', 'PDF'),
+                    radioButtons('format', 'Document format', c('HTML'),
                                  inline = TRUE, selected = 'HTML'),
                     downloadButton('downloadReportAlpha')
                 )
@@ -715,12 +694,11 @@ ui <- dashboardPage(
                 box(
                   radioButtons("renderOrdplot", "Render Ordination Plot", choices = c("Yes", "No")), 
                   radioButtons("renderSplitOrdplot", "Render Split Ordination Plot", choices = c("Yes", "No")),
-                  radioButtons("renderTaxaplot", "Render Taxa Plot", choices = c("Yes", "No")),
-                  radioButtons("dumpCodeBeta", "Dump Plot Generation Code", choices = c("Yes", "No"))
+                  radioButtons("renderTaxaplot", "Render Taxa Plot", choices = c("Yes", "No"))
                 ),
                 box(
                   paste0("Format, button to download as format"),
-                  radioButtons('format', 'Document format', c('HTML', 'PDF'),
+                  radioButtons('format', 'Document format', c('HTML'),
                                inline = TRUE, selected = 'HTML'),
                   downloadButton('downloadReportBeta')
                 )
@@ -730,12 +708,11 @@ ui <- dashboardPage(
                   radioButtons("renderPCA", "Render PCA Plot", choices = c("Yes","No")),
                   radioButtons("renderPCOAMDS", "Render PCoA/MDS/NMDS Plot", choices = c("Yes","No")),
                   radioButtons("renderTSNE", "Render t-SNE Plot", choices = c("Yes","No")),
-                  radioButtons("renderAbundanceHistograms", "Render Abundance Histograms", choices = c("Yes","No")),
-                  radioButtons("dumpCodeLandscape", "Dump Plot Generation Code", choices = c("Yes","No"))
+                  radioButtons("renderAbundanceHistograms", "Render Abundance Histograms", choices = c("Yes","No"))
                 ),
                 box(
                   paste0("Format, button to download as format"),
-                  radioButtons('format', 'Document format', c('HTML', 'PDF'),
+                  radioButtons('format', 'Document format', c('HTML'),
                                inline = TRUE, selected = 'HTML'),
                   downloadButton('downloadReportLandscape')
                 )
@@ -744,12 +721,11 @@ ui <- dashboardPage(
                 box(
                   radioButtons("renderModelVerification", "Render Model Verification Plot", choices = c("Yes", "No")),
                   radioButtons("renderParameters", "Render Alpha and Theta Parameters", choices = c("Yes", "No")),
-                  radioButtons("renderTaxaContributionPlot", "Render Taxa Contribution Plots", choices = c("Yes", "No")),
-                  radioButtons("dumpCodeDMM", "Dump Plot Generation Code ", choices = c("Yes", "No"))
+                  radioButtons("renderTaxaContributionPlot", "Render Taxa Contribution Plots", choices = c("Yes", "No"))
                 ),
                 box(
                   paste0("Format, button to download as format"),
-                  radioButtons('format', 'Document format', c('HTML', 'PDF'),
+                  radioButtons('format', 'Document format', c('HTML'),
                                inline = TRUE, selected = 'HTML'),
                   downloadButton('downloadReportDMM')
                 )
@@ -759,12 +735,11 @@ ui <- dashboardPage(
                   radioButtons("renderDensityPlot", "Render density plot", choices = c("Yes","No")),
                   radioButtons("renderPValueTables", "Render P-Value tables", choices = c("Yes","No")),
                   radioButtons("renderFactorPlot", "Render top factors barplot", choices = c("Yes","No")),
-                  radioButtons("renderNetworkMap", "Render network map", choices = c("Yes","No")),
-                  radioButtons("renderHeatmap", "Render heatmap", choices = c("Yes","No"))
+                  radioButtons("renderNetworkMap", "Render network map", choices = c("Yes","No"))
                 ),
               box(
                 paste0("Format, button to download as format"),
-                radioButtons('format', 'Document format', c('HTML', 'PDF'),
+                radioButtons('format', 'Document format', c('HTML'),
                              inline = TRUE, selected = 'HTML'),
                 downloadButton('downloadReportPermanova')
               )
@@ -796,8 +771,15 @@ server <- function(input, output, session) {
     }
   })
   
-  ## Core Microbiota ##
+  output$testThing <- renderPrint({
+    if (input$datasetChoice == "Use sample dataset") {
+      paste0(input$datasetSample)
+    } else {
+        deparse(substitute(biomfile))
+    }
+  }) 
   
+  ## Core Microbiota ##
   
   prevalenceAbsolute <- reactive({
     as.data.frame(prevalence(compositionalInput(), detection = input$detectionPrevalence/100, sort = TRUE, count = TRUE))
@@ -848,6 +830,55 @@ server <- function(input, output, session) {
     coreHeatmapParams()
   })
   
+  #Output code - core microbiota
+  prevalenceAbsoluteCode <- reactive({
+    paste0("as.data.frame(prevalence(microbiome::transform(",input$datasetSample,", type = 'compositional'), detection = ",input$detectionPrevalence,"/100, sort = TRUE, count = TRUE))")
+  })
+  prevalenceRelativeCode <- reactive({
+    paste0("as.data.frame(prevalence(microbiome::transform(",input$datasetSample,", type = 'compositional'), detection = ",input$detectionPrevalence,"/100, sort = TRUE))")
+  })
+  
+  corePhyloCode <- reactive({
+    paste0("corePhylo <- core(microbiome::transform(",input$datasetSample,", type = 'compositional'), detection = ",input$detectionPrevalence2,", prevalence = ",input$prevalencePrevalence,")")
+  })
+  
+  corePhyloSummaryCode <- reactive({
+    paste0("summarize_phyloseq(corePhylo)")
+  })
+  
+  coreTaxaCode <- reactive({
+    paste0("taxa(corePhylo)")
+  })
+  
+  #This is inefficient, but... #There's a bug where a vector of multiple values writes the whole paste0 again, rather than just c(value1,value2,...,valueN)
+  coreLineplotCodeParams1 <- reactive({
+    paste0("prevalences <- as.numeric(",input$prevalenceSelection,")")
+  })
+  coreLineplotCodeParams2 <- reactive({
+    paste0("detections <- as.numeric(unlist(strsplit(",input$detectionForLineplot,", split = ',')))/100")
+  })
+  coreLineplotCodeParams3 <- reactive({
+    paste0("lineplot <- plot_core(microbiome::transform(",input$datasetSample,", type = 'compositional'), prevalences = prevalences, detections = detections, plot.type = 'lineplot') + xlab('Relative Abundance (%)')")
+  })
+  coreLineplotCodeParams4 <- reactive({
+    paste0("plotly_build(lineplot)")
+  })
+  
+  coreHeatmapCodeParams1 <- reactive({
+    paste0("prevalences <- as.numeric(",input$prevalenceSelectionHeat,")")
+  })
+  coreHeatmapCodeParams2 <- reactive({
+    paste0("detections <- 10^seq(log10(as.numeric(",input$detectionMin,")), log10(as.numeric(",input$detectionMax,")), length = as.numeric(",input$maxLength,"))")
+  })
+  coreHeatmapCodeParams3 <- reactive({
+    paste0("gray <- gray(seq(0,1,length=5))")
+  })
+  coreHeatmapCodeParams4 <- reactive({
+    paste0("coreplot <- plot_core(microbiome::transform(",input$datasetSample,", type = 'compositional'), plot.type = 'heatmap', colours = gray, prevalences = prevalences, detections = detections, min.prevalence = .5) + xlab('Detection Threshold (Relative Abundance (%))')")
+  })
+  coreHeatmapCodeParams5 <- reactive({
+    paste0("plotly_build(coreplot)")
+  })
   
   ## Community Composition ##
   
@@ -883,22 +914,17 @@ server <- function(input, output, session) {
   
   # Subset the database #
   datasetSubsetInput <- reactive({
-    subset1 <-
-      prune_samples(sample_data(datasetInput())[[input$z1]] == input$v1, datasetInput())
-    subset1 <-
-      prune_samples(sample_data(subset1)[[input$z2]] == input$v2, subset1)
-    subset1 <-
-      prune_samples(sample_data(subset1)[[input$z3]] == input$v3, subset1)
-    subset2 <-
-      prune_samples(sample_data(subset1)[[input$z1]] == input$v1, subset1) %>% aggregate_taxa(level = input$v4)
+    subset1 <- prune_samples(sample_data(datasetInput())[[input$z1]] == input$v1, datasetInput())
+    subset1 <- prune_samples(sample_data(subset1)[[input$z2]] == input$v2, subset1)
+    subset1 <- prune_samples(sample_data(subset1)[[input$z3]] == input$v3, subset1)
+    subset2 <- prune_samples(sample_data(subset1)[[input$z1]] == input$v1, subset1) %>% aggregate_taxa(level = input$v4)
     microbiome::transform(subset2, "compositional")
   })
   
-  
+    
   # Make plots
   communityPlotParams <- reactive ({
-    theme_set(theme_bw(21))
-    
+    theme_set(theme_classic(21))
     communityplot <-
       datasetSubsetInput() %>% plot_composition(sample.sort = "Bacteroidetes", otu.sort = "abundance") +
       scale_fill_manual(values = default_colors("Phylum")[taxa(datasetSubsetInput())])
@@ -948,14 +974,10 @@ server <- function(input, output, session) {
   
   # And top it off with a taxa prevalence plot
   communityPrevalenceParams <- reactive({
-    subset1 <-
-      prune_samples(sample_data(datasetInput())[[input$z1]] == input$v1, datasetInput())
-    subset1 <-
-      prune_samples(sample_data(subset1)[[input$z2]] == input$v2, subset1)
-    subset1 <-
-      prune_samples(sample_data(subset1)[[input$z3]] == input$v3, subset1)
-    subset2 <-
-      prune_samples(sample_data(subset1)[[input$z1]] == input$v1, subset1) %>% aggregate_taxa(level = input$v4Plot)
+    subset1 <- prune_samples(sample_data(datasetInput())[[input$z1]] == input$v1, datasetInput())
+    subset1 <- prune_samples(sample_data(subset1)[[input$z2]] == input$v2, subset1)
+    subset1 <- prune_samples(sample_data(subset1)[[input$z3]] == input$v3, subset1)
+    subset2 <- prune_samples(sample_data(subset1)[[input$z1]] == input$v1, subset1) %>% aggregate_taxa(level = input$v4Plot)
     data <- microbiome::transform(subset2, "compositional")
     prevplot <- plot_taxa_prevalence(data, input$v4 ) #Can be changed to whatever taxonomic rank the input files have
     plotly_build(prevplot)
@@ -964,17 +986,65 @@ server <- function(input, output, session) {
   output$communityPrevalence <- renderPlotly({
     communityPrevalenceParams()
   })  
-
   
-  ## Alpha Diversity ##
+  #Output code - community composition
   
-  # Updating SelectInputs when database changes #
-  observe({
-    updateSelectInput(session, "x",
-                      choices = colnames(meta(datasetInput())))
-    updateSelectInput(session, "x2", choices = colnames(meta(datasetInput())))
-    updateSelectInput(session, "y",
-                      choices = colnames(alpha(datasetInput())))
+  datasetSubsetInputCode1 <- reactive({
+    paste0("subset1 <- prune_samples(sample_data(datasetInput())[[",input$z1,"]] == ",input$v1,", ",input$datasetSample,")")
+  })
+  datasetSubsetInputCode2 <- reactive({
+    paste0("subset1 <- prune_samples(sample_data(subset1)[[",input$z2,"]] == ",input$v2,", subset1)")
+  })
+  datasetSubsetInputCode3 <- reactive({
+    paste0("subset1 <- prune_samples(sample_data(subset1)[[",input$z3,"]] == ",input$v3,", subset1)")
+  })
+  datasetSubsetInputCode4 <- reactive({
+    paste0("subset2 <- prune_samples(sample_data(subset1)[[",input$z1,"]] == ",input$v1,", subset1) %>% aggregate_taxa(level = ",input$v4,")")
+  })
+  datasetSubsetInputCode5 <- reactive({
+    paste0("subset2 <- microbiome::transform(subset2, 'compositional'')")
+  })
+  
+  communityPlotCodeParams1 <- reactive({
+    paste0("theme_set(theme_classic(21))")
+  })
+  communityPlotCodeParams2 <- reactive({
+    paste0("communityplot <- subset2 %>% plot_composition(sample.sort = 'Bacteroidetes', otu.sort = 'abundance') + scale_fill_manual(values = default_colors('Phylum')[taxa(subset2)])")
+  })
+  communityPlotCodeParams3 <- reactive({
+    paste0("print(communityplot)")
+  })
+  
+  communityPlotGenusCodeParams <- reactive({
+    paste0("compositionplot <- plot_composition( subset2, taxonomic.level = 'Genus', sample.sort = 'nationality', x.label = 'nationality' ) + guides(fill = guide_legend(ncol = 1)) + scale_y_percent() + labs( x = 'Samples', y = 'Relative abundance (%)', title = 'Relative abundance data') + theme_ipsum(grid = 'Y')")
+  })
+  
+  communityBarplotCodeParams1 <- reactive({
+    paste0("compplot <- plot_composition(subset2, average_by = ",input$z1Average,", plot.type = ",input$plotTypeZ1Average,")")
+  })
+  communityBarplotCodeParams2 <- reactive({
+    paste0("print(compplot)")
+  })
+  communityPrevalenceCodeParams1 <- reactive({
+    paste0("subset1 <- prune_samples(sample_data(",input$datasetSample,"))[[",input$z1,"]] == ",input$v1,", ",input$datasetSample,")")
+  })
+  communityPrevalenceCodeParams2 <- reactive({
+    paste0("subset1 <- prune_samples(sample_data(",input$datasetSample,"))[[",input$z2,"]] == ",input$v2,", subset1)")
+  })
+  communityPrevalenceCodeParams3 <- reactive({
+    paste0("subset1 <- prune_samples(sample_data(",input$datasetSample,"))[[",input$z3,"]] == ",input$v3,", subset1)")
+  })
+  communityPrevalenceCodeParams4 <- reactive({
+    paste0("subset2 <- prune_samples(sample_data(subset1)[[",input$z1,"]] == input$v1, subset1) %>% aggregate_taxa(level = ",input$v4Plot,")")
+  })
+  communityPrevalenceCodeParams5 <- reactive({
+    paste0("data <- microbiome::transform(subset2, 'compositional')")
+  })
+  communityPrevalenceCodeParams6 <- reactive({
+    paste0("prevplot <- plot_taxa_prevalence(data, input$v4 )")
+  })
+  communityPrevalenceCodeParams7 <- reactive({
+    paste0("print(prevplot)")
   })
   
   # Phyloseq Summary #
@@ -986,6 +1056,34 @@ server <- function(input, output, session) {
   output$summary <- renderPrint({
     summaryParams()
   })
+  
+  ## Alpha Diversity ##
+  
+  #Abundance and Evenness tables#
+  
+  evennessParams <- reactive({
+    datatable(evenness(datasetInput()),options = list(scrollX = TRUE))
+  })
+  output$evennessTable <- renderDataTable({
+    evennessParams()
+  })
+  
+  abundanceParams <- reactive({
+    datatable(abundances(datasetInput(), transform = "compositional"), options = list(scrollX = TRUE))
+  })
+  output$abundanceTable <- renderDataTable({
+    abundanceParams()
+  })
+  
+  # Updating SelectInputs when database changes #
+  observe({
+    updateSelectInput(session, "x",
+                      choices = colnames(meta(datasetInput())))
+    updateSelectInput(session, "x2", choices = colnames(meta(datasetInput())))
+    updateSelectInput(session, "y",
+                      choices = colnames(alpha(datasetInput())))
+  })
+  
   
   # Merged table - generate and output #
   mergedTable <- reactive({
@@ -1001,22 +1099,22 @@ server <- function(input, output, session) {
     viewParams()
   })
   
-  # Violin plot #
-  violinPlotParams <- reactive({
-    violin <- ggviolin(
-      mergedTable(),
-      x = input$x,
-      y = input$y,
-      fill = input$x,
-      palette = c("#a6cee3", "#b2df8a", "#fdbf6f"),
-      add = "boxplot"
-    )
-    plotly_build(violin)
-  })
-  
-  output$violinPlot <- renderPlotly({
-    violinPlotParams()
-  })
+  # # Violin plot #
+  # violinPlotParams <- reactive({
+  #   violin <- ggviolin(
+  #     mergedTable(),
+  #     x = input$x,
+  #     y = input$y,
+  #     fill = input$x,
+  #     palette = c("#a6cee3", "#b2df8a", "#fdbf6f"),
+  #     add = "boxplot"
+  #   )
+  #   plotly_build(violin)
+  # })
+  # 
+  # output$violinPlot <- renderPlotly({
+  #   violinPlotParams()
+  # })
   
   # Richness Plot #
   richnessPlotParams <- reactive({
@@ -1031,6 +1129,51 @@ server <- function(input, output, session) {
   
   output$richnessPlot <- renderPlotly({
     richnessPlotParams()
+  })
+  
+  #Output code - Alpha diversity + summary
+  
+  #Summary code
+  summaryCodeParams <- reactive({
+    paste0("summarize_phyloseq(",input$datasetSample,")")
+  })
+  output$summaryCode <- renderPrint({
+    summaryCodeParams()
+  })
+  
+  #DT - Evenness
+  evennessTableCodeParams <- reactive({
+    paste0("datatable(evenness(", input$datasetSample ,"),options = list(scrollX = TRUE))")
+  })
+  output$evennessTableCode <- renderPrint({
+    evennessTableCodeParams()
+  })
+  #DT - Abundance
+  abundanceTableCodeParams <- reactive({
+    paste0("datatable(abundances(", input$datasetSample ,", transform = 'compositional'), options = list(scrollX = TRUE))")
+  })
+  output$abundanceTableCode <- renderPrint({
+    abundanceTableCodeParams()
+  })
+  #DT - Metadata, Diversity measures
+  mergedTableCodeParams <- reactive({
+    paste0("merge(meta(",input$datasetSample,"), alpha(",input$datasetSample,"), all.y = TRUE)")
+  })
+  mergedTableCode <- renderPrint({
+    mergedTableCodeParams()
+  })
+  
+  
+  #Richness Plot
+  richnessPlotCodeParams <- reactive({
+      dataset <- input$datasetSample
+      x <- input$x2
+      richness <- input$richnessChoices
+      paste0("richnessplot <- plot_richness( ", dataset , ", " , "x = " , x , ", " , "measures = " , richness , ", " , "color = " , x , " )")
+  })
+  
+  output$richnessPlotCode <- renderPrint({
+    richnessPlotCodeParams()
   })
 
   
@@ -1079,7 +1222,7 @@ server <- function(input, output, session) {
   })
   
   ordinatePlotParams <- reactive({
-    p <- phyloseq::plot_ordination(datasetInput(), ordinateData(), color = input$xb ) + geom_point(size = input$geom.size)
+    p <- phyloseq::plot_ordination(datasetInput(), ordinateData(), color = input$xb, label = input$yb ) + geom_point(size = input$geom.size)
     plotly_build(p)
   })
   
@@ -1118,6 +1261,39 @@ server <- function(input, output, session) {
   
   output$taxaOrd <- renderPlotly({
     taxaOrdParams()
+  })
+  
+  #Output code - Beta diversity
+  ordinateDataCodeParams <- reactive({
+    paste0("ordinateData <- ordinate(",
+      "microbiome::transform(",input$datasetSample,", 'compositional'),",
+      "method = ", input$ordinate.method,",",
+      "distance = ", input$ordinate.distance,")"
+    )
+  })
+  ordinateDataSplitCodeParams <- reactive({
+    paste0("ordinateDataSplit <- ordinate(",
+           "microbiome::transform(",input$datasetSample,", 'compositional'),",
+           "method = ", input$ordinate.method2,",",
+           "distance = ", input$ordinate.distance2,")"
+    )
+  })
+  ordinateDataTaxaCodeParams <- reactive({
+    paste0("ordinateDataTaxa <- ordinate(",
+           "microbiome::transform(",input$datasetSample,", 'compositional'),",
+           "method = ", input$ordinate.method3,",",
+           "distance = ", input$ordinate.distance3,")"
+    )
+  })
+  ordinatePlotCodeParams <- reactive({
+    paste0("p <- phyloseq::plot_ordination(",input$datasetSample,", ordinateData, color = ",input$xb,", label = ",input$yb," ) + geom_point(size = ",input$geom.size,")"," plotly_build(p)")
+  })
+  splitOrdCodeParams <- reactive({
+    paste0( "splitOrdplot <- plot_ordination(",input$datasetSample,",ordinateDataSplit, type = 'split', shape = ",input$xb,", color = ",input$yb,", label = ",input$yb," ) + geom_point(size = ",input$geom.size2,")", " plotly_build(splitOrdplot)")
+  })
+  taxaOrdCodeParams <- reactive({
+    paste0( "taxaOrdplot <- plot_ordination(",input$datasetSample,", ordinateDataTaxa, type = 'taxa', color = ",input$zb,", label = ",input$xb,") + geom_point(size = ",input$geom.size3,")"," plotly_build(taxaOrdplot)"
+    )
   })
   
   
@@ -1219,7 +1395,26 @@ server <- function(input, output, session) {
     landscapeAbundanceHistRelParams()
   })
   
+  #Output code - Landscape analysis
   
+  landscapePCACodeParams <- reactive({
+    paste0("p <- plot_landscape(",input$datasetSample,", method = 'PCA', transformation = 'clr') + labs(title = paste('PCA / CLR')) plotly_build(p)")
+  })
+  
+  landscapeOrdinationCodeParams <- reactive({
+    paste0("x <- ",input$datasetSample,"quiet(x.ord <- ordinate(x, ",input$ordinateMethodLandscape,", ",input$ordinateDistanceLandscape,")) proj <- phyloseq::plot_ordination(x, x.ord, justDF=TRUE) names(proj)[1:2] <- paste('Comp0, 1:2, sep='.') p <- plot_landscape(proj[, 1:2], col = proj[[",input$metadataLandscape1,"]], add.points = TRUE, legend = TRUE) plotly_build(p)")
+  })
+  
+  landscapeTSneCodeParams <- reactive({
+    paste0("p <- plot_landscape(",input$datasetSample,", 't-SNE', distance = 'euclidean', transformation = 'hellinger') + labs(title = paste('t-SNE / Hellinger / Euclidean')) plotly_build(p)")
+  })
+  
+  landscapeAbundanceHistAbsCodeParams <- reactive({
+    paste0("p <- plot_density(",input$datasetSample,", 'Dialister') + ggtitle('Absolute abundance') plotly_build(p)")
+  })
+  landscapeAbundanceHistRelCodeParams <- reactive({
+    paste0("p <- plot_density(microbiome::transform(",input$datasetSample,", 'compositional'), 'Dialister', log10 = TRUE) + ggtitle('Relative abundance') + xlab('Relative abundance (%)') plotly_build(p)")
+  })
   
   #DMM COMMUNITY TYPING#
   
@@ -1282,12 +1477,91 @@ server <- function(input, output, session) {
     taxaContributionPerComponentParams()
   })
   
+  #Output code - DMM community typing
+  dmmModelFitCode1 <- reactive({
+    paste0("taxa <- core_members(microbiome::transform(",input$datasetSample,",'compositional'), detection = ",input$detectionDMM,"/100, prevalence = ",input$prevalenceDMM,"/100)")
+  })
+  dmmModelFitCode2 <- reactive({
+    paste0("pseq <- prune_taxa(taxa, ",input$datasetSample,")")
+  })
+  dmmModelFitCode3 <- reactive({
+    paste0("dat <- abundances(pseq)")
+  })
+  dmmModelFitCode4 <- reactive({
+    paste0("count <- as.matrix(t(dat))")
+  })
+  dmmModelFitCode5 <- reactive({
+    paste0("fit <- mclapply(1:",input$maxModelsDMM,", dmn, count = count, verbose=TRUE)")
+  })
+
+  dmmModelCheckCodeParams1 <- reactive({
+    paste0("lplc <- sapply(fit, laplace)") # AIC / BIC / Laplace
+  })
+  
+  dmmModelCheckCodeParams2 <- reactive({
+    paste0("aic  <- sapply(fit, AIC)") # AIC / BIC / Laplace
+  })
+  dmmModelCheckCodeParams3 <- reactive({
+    paste0("bic  <- sapply(fit, BIC)") # AIC / BIC / Laplace
+  })
+  dmmModelCheckCodeParams4 <- reactive({
+    paste0("plot(lplc, type='b', xlab='Number of Dirichlet Components', ylab='Model Fit')")
+  })
+  dmmModelCheckCodeParams5 <- reactive({
+    paste0("lines(aic, type='b', lty = 2)")
+  })
+  dmmModelCheckCodeParams6 <- reactive({
+    paste0("lines(bic, type='b', lty = 3)")
+  })
+  
+  dmmModelBestFitCode1 <- reactive({
+    paste0("lplc <- sapply(fit, laplace)") # AIC / BIC / Laplace
+  })
+  
+  dmmModelBestFitCode2 <- reactive({
+    paste0("aic  <- sapply(fit, AIC)") # AIC / BIC / Laplace
+  })
+  dmmModelBestFitCode3 <- reactive({
+    paste0("bic  <- sapply(fit, BIC)") # AIC / BIC / Laplace
+    
+  })
+  dmmModelBestFitCode4 <- reactive({
+    paste0("bestFit <- fit[[which.min(lplc)]]")
+    
+  })
+
+  dmmParametersCode <- reactive({
+    paste0("datatable(mixturewt(bestFit))")
+  })
+  sampleAssignmentsCode <- reactive({
+    paste0("datatable(apply(mixture(bestFit), 1, which.max))")
+  })
+  
+  taxaContributionPerComponentCodeParams1 <- reactive({
+    paste0( "for (k in seq(ncol(fitted(bestFit)))) {")
+  })
+  
+  taxaContributionPerComponentCodeParams2 <- reactive({
+    paste0( "d <- melt(fitted(bestFit))")
+  })
+  taxaContributionPerComponentCodeParams3 <- reactive({
+    paste0( "colnames(d) <- c('OTU', 'cluster', 'value')")
+  })
+  taxaContributionPerComponentCodeParams4 <- reactive({
+    paste0("d <- subset(d, cluster == k) %>% arrange(value) %>% mutate(OTU = factor(OTU, levels = unique(OTU))) %>% filter(abs(value) > quantile(abs(value), 0.8))")
+  })
+  taxaContributionPerComponentCodeParams5 <- reactive({
+    paste0("p <- ggplot(d, aes(x = OTU, y = value)) + geom_bar(stat = 'identity') + coord_flip() + labs(title = paste('Top drivers: community type', k))")
+  })
+  taxaContributionPerComponentCodeParams6 <- reactive({
+    paste0("print(p)}")
+  })
+  
   ###########################
   ## Statistical analysis ###
   ###########################
   
   ## PERMANOVA ##
-  
   #Update metadata column#
   observe({
     updateSelectInput(session, "permanovaColumn",
@@ -1366,6 +1640,84 @@ server <- function(input, output, session) {
     xp <- plot_heatmap(compositionalInput(), distance = ordinate(compositionalInput(), distance = input$permanovaDistanceMethodHeat), method = input$permanovaMethodHeat)
     plotly_build(p)
   })
+  
+  #Output code - PERMANOVA
+  
+  permanovaCode1 <- reactive({
+    paste0("otu <- abundances(microbiome::transform(",input$datasetSample,",'compositional'))")
+  })
+  permanovaCode2 <- reactive({
+    paste0("meta <- meta(microbiome::transform(",input$datasetSample,",'compositional'))")
+  })
+  permanovaCode3 <- reactive({
+    paste0("permnumber <- ", input$permanovaPermutationsP)
+  })
+  permanovaCode4 <- reactive({
+    paste0("metadata <- ", input$permanovaColumnP)
+  })
+  permanovaCode5 <- reactive({
+    paste0("permanova <- adonis(t(otu) ~ meta[[metadata]], data = meta, permutations = permnumber, method = 'bray', parallel = getOption('mc.cores'))")
+  })
+
+  densityPlotCodeParams1 <- reactive({
+    paste0("p <- plot_landscape(microbiome::transform(",input$datasetSample,",'compositional'), method = ",input$permanovaMethod,", distance = ",input$permanovaDistanceMethod,", col = ",input$permanovaColumn,", size = ",input$permanovaPlotSize,")")
+  })
+  densityPlotCodeParams2 <- reactive({
+    paste0("plotly_build(p)")
+  })
+  
+  pValueCode <- reactive({
+    paste0("as.data.frame(permanova$aov.tab)")
+  })
+  
+  homogenietyCodeParams1 <- reactive({
+    paste0("otu <- abundances(microbiome::transform(",input$datasetSample,",'compositional'))")
+  })
+  
+  homogenietyCodeParams2 <- reactive({
+    paste0("meta <- meta(microbiome::transform(",input$datasetSample,",'compositional'))")
+  })
+  homogenietyCodeParams3 <- reactive({
+    paste0("dist <- vegdist(t(otu))")
+  })
+  homogenietyCodeParams4 <- reactive({
+    paste0("metadata <- ", input$permanovaColumnP)
+  })
+  homogenietyCodeParams5 <- reactive({
+    paste0("homogeniety <- anova(betadisper(dist, meta[[metadata]]))")
+  })
+  
+  homogenietyCodeParams6 <- reactive({
+    paste0("datatable(homogeniety)")
+  })
+  
+  topFactorPlotCodeParams1 <- reactive({
+    paste0("p <- barplot(sort(top.coef), horiz = T, las = 1, main = 'Top taxa')")
+  })
+  topFactorPlotCodeParams2 <- reactive({
+    paste0("print(p)")
+  })
+  
+  netPlotCodeParams1 <- reactive({
+    paste0("n <- make_network(microbiome::transform(",input$datasetSample,",'compositional'), type = 'otu', distance = ",input$permanovaDistanceMethodNet,")")
+  })
+  
+  netPlotCodeParams2 <- reactive({
+    paste0("p <- plot_network(n)")
+  })
+  
+  netPlotCodeParams3 <- reactive({
+    paste0("plotly_build(p)")  
+  })
+  
+  permaHeatmapCode1 <- reactive({
+    paste0("xp <- plot_heatmap(microbiome::transform(",input$datasetSample,",'compositional'), distance = ordinate(microbiome::transform(",input$datasetSample,",'compositional'), distance = ",input$permanovaDistanceMethodHeat,"), method = ",input$permanovaMethodHeat,")")
+  })
+  
+  permaHeatmapCode2 <- reactive({
+    paste0("plotly_build(p)")
+  })
+  
   
   # output$permaHeatmap <- renderPlotly({
   #   permaHeatmapParams()
@@ -1448,7 +1800,14 @@ server <- function(input, output, session) {
   )  
   
 # Alpha Diversity Results #
-  
+  # 
+  # output$alphaCodeSummary <- renderPrint({
+  #   paste0("library(\"phyloseq\")")
+  #   paste0("library(\"microbiome\")")
+  #   paste0("summarize_phyloseq(" + deparse(substitute(datasetInput())) + ")")
+  # })
+
+
   output$downloadReportAlpha <- downloadHandler(
     filename = function() {
       paste('alpha-report', sep = '.', switch(
@@ -1573,6 +1932,7 @@ server <- function(input, output, session) {
       file.rename(out, file)
     }
   )
+
 }
 
 # Run the application
