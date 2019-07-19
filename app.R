@@ -138,7 +138,7 @@ ui <- dashboardPage(
           selectInput(
             "datasetSample",
             "Or choose a sample dataset:",
-            choices = c("dietswap", "atlas1006", "peerj32","ps")
+            choices = c("dietswap", "atlas1006", "peerj32")
           )
         )
       ),
@@ -806,8 +806,7 @@ server <- function(input, output, session) {
         input$datasetSample,
         "dietswap" = dietswap,
         "atlas1006" = atlas1006,
-        "peerj32" = peerj32,
-        "ps" = ps
+        "peerj32" = peerj32
       )
     } else {
       req(input$dataset)
