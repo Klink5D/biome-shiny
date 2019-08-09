@@ -571,11 +571,12 @@ ui <- dashboardPage(
                               box( title = "Variables", width= "2", collapsible = TRUE,
                                    selectInput("permanovaDistanceMethodFac","Distance method:", choices = c("bray","jacard","unifrac"), selected = "bray"),
                                    selectInput("permanovaColumnFac","Sample variable:", choices = colnames("datasetMetadata")),
-                                   numericInput("permanovaPermutationsFac", "Number of permutations:", min = 1, step = 1, value = 99)
+                                   numericInput("permanovaPermutationsFac", "Number of permutations:", min = 1, step = 1, value = 99)#,
+                                   # checkboxInput("transparentPermanovaTopfactors", "Transparent background", value = TRUE)
                               )              
                      ),
                      tabPanel(title = "Plot",
-                              plotlyOutput("topFactorPlot")
+                              plotOutput("topFactorPlot")
                      )
                    )
         ),
@@ -583,22 +584,23 @@ ui <- dashboardPage(
                    tabsetPanel(
                      tabPanel(title = "Variables",
                               box( title = "Variables", width= "2", collapsible = TRUE,
-                                   selectInput("permanovaPlotTypeNet", "Network Plot Type:", c("Sample Network Plot" = "samples", "Taxa/OTU Network Plot" = "taxa"), selected = "samples"),
+                                   selectInput("permanovaPlotTypeNet", "Network Plot Type:", c("samples", "taxa"), selected = "samples"),
                                    selectInput("permanovaDistanceMethodNet","Distance method (not required by all ordination methods):", choices = c("bray","jacard","unifrac"), selected = "bray"),
                                    selectInput("permanovaMethodNet","Ordination method:",
                                                choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
                                                selected = "CCA"),
-                                   # sliderInput("permanovaPlotSizeNet", "Plot point size:", min = 0.5, max = 10, step = 0.5, value = "3"),
                                    numericInput("permanovaPermutationsNet", "Number of permutations:", min = 1, step = 1, value = 99),
-                                   conditionalPanel(condition = "input.permanovaPlotTypeNet = 'samples'",
+                                   checkboxInput("transparentPermanova", "Transparent background", value = TRUE),
+                                   conditionalPanel(condition = "input.permanovaPlotTypeNet == 'samples'",
                                       selectInput("permanovaMetadataNet", "Sample variable to cluster data samples:", c("Update")),
                                       selectInput("permanovaMetaShapeNet", "Sample variable to set different point shapes:", c("Update"))
                                     )         
                                   )
-                              )
-                     ),
-                     tabPanel(title ="Plot",
+                              ),
+                        tabPanel(title ="Plot",
                               plotlyOutput("netPlot")
+                        )
+                     
                      )
                    )
         )
@@ -1335,6 +1337,10 @@ server <- function(input, output, session) {
                       choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "permanovaColumnFac",
                       choices = colnames(meta(datasetInput())))
+    updateSelectInput(session, "permanovaMetadataNet",
+                      choices = colnames(meta(datasetInput())))
+    updateSelectInput(session, "permanovaMetaShapeNet",
+                    choices = colnames(meta(datasetInput())))
   })
 
   permanova <- reactive({
@@ -1376,37 +1382,38 @@ server <- function(input, output, session) {
     top.coef <- coef[rev(order(abs(coef)))[1:20]] #top 20 coefficients
     par(mar = c(3, 14, 2, 1))
      p <- barplot(sort(top.coef), horiz = T, las = 1, main = "Top taxa")
-    if(input$transparentPermanova == TRUE){
-      p <- p +
-        theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
-    }
+    # if(input$transparentPermanovaTopfactors == TRUE){
+    #   p <- p +
+    #     theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
+    # }
     print(p)
   })
-
   output$topFactorPlot <- renderPlot({
     topFactorPlotParams()
   })
 
   netPlotParams <- reactive({
-    n <- make_network(compositionalInput(), type = input$permanovaPlotTypeNet, distance = input$permanovaDistanceMethodNet)
-    #p <- plot_network(n, compositionalInput(), type = "taxa", color= ntaxa(otu_table(compositionalInput())))
-    p <- plot_network(n, compositionalInput(), shape = "nationality", color= "nationality")
-    
-        if(input$transparentPermanova == TRUE){
-      p <- p +
-        theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
+    if(input$permanovaPlotTypeNet == "samples"){
+      n <- make_network(compositionalInput(), type = "samples", distance = input$permanovaDistanceMethodNet)
+      p <- plot_network(n, compositionalInput(), type = "samples", shape = input$permanovaMetaShapeNet, color = input$permanovaMetadataNet )
+    }
+    if(input$permanovaPlotTypeNet == "taxa"){
+      n <- make_network(compositionalInput(), type = "taxa", distance = input$permanovaDistanceMethodNet)
+      p <- plot_network(n, compositionalInput(), type = "taxa", color= ntaxa(otu_table(compositionalInput())))
+    }
+    if(input$transparentPermanova == TRUE){
+      p <- p + theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
     }
     ggplotly(p, height = 500, width = 1050)
   })
-
   output$netPlot <- renderPlotly({
     netPlotParams()
   })
 
-  output$permaHeatmap <- renderPlotly({
-    xp <- plot_heatmap(compositionalInput(), distance = ordinate(compositionalInput(), distance = input$permanovaDistanceMethodHeat), method = input$permanovaMethodHeat)
-    ggplotly(p, height = 500, width = 1050)
-  })
+  # output$permaHeatmap <- renderPlotly({
+  #   xp <- plot_heatmap(compositionalInput(), distance = ordinate(compositionalInput(), distance = input$permanovaDistanceMethodHeat), method = input$permanovaMethodHeat)
+  #   ggplotly(p, height = 500, width = 1050)
+  # })
   
   # output$permaHeatmap <- renderPlotly({
   #   permaHeatmapParams()
