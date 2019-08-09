@@ -21,152 +21,103 @@ library(vegan)
 ```
 # Phyloseq File Summary
 
-Basic information about the dataset.
-```{r phyloseqsummary, echo=FALSE}
+Basic information about the loaded dataset.
+
+```{r, echo=FALSE, error=TRUE}
   summarize_phyloseq(datasetInput())
 ```
 
 # Core Microbiota
 
+This section seeks to identify and display, in table and plot form, the most abundant microbiota in the dataset. In future versions it will allow the user to use these parameters to filter the loaded dataset.
+
 ## File Summary
 
-Information about the dataset after filtering to include only core taxa. In future versions, it will be possible to apply these changes to the dataset.
+Basic information about the loaded dataset after applying filters.
 
-```{r coretaxasummary, echo=FALSE}
+```{r, echo=FALSE, error=TRUE}
 if( input$renderCoreTaxaSummary == "Yes"){
   summarize_phyloseq(corePhylo())
 }
 ```
 
+
+
 ## Prevalence Tables
-
-Shows prevalence data for each OTU, that is, the number of times (or percentage) each OTU appears in each sample after the user specifies a detection value.
-
-```{r coreprevalenceabsolutetables, echo=FALSE}
+```{r, echo=FALSE, error=TRUE}
 if (input$renderPrevTables == "Yes"){
   prevalenceAbsolute()
-}
-```
-
-```{r coreprevalencerelativetables, echo=FALSE}
-if (input$renderPrevTables == "Yes"){
   prevalenceRelative()
 }
 ```
-
-## Core Taxa Heatmap
-
-A heatmap that shows the detection threshold of each OTU, with a minimum detection value set by the user. It allows the user to ascertain which OTUs are the most commonly found within the samples.
-
-```{r coretaxaplot, echo=FALSE}
+## Core Taxa Heatmap 
+```{r, echo=FALSE, error=TRUE}
 if(input$renderCoreHeatmap == "Yes"){
   coreHeatmapParams()
 }
 ```
 
 # Community Composition
-
-## Abundance Plot (Counts)
-
-A plot detailing the number of times the taxa is read in a sample.
-
-```{r abundanceplot, echo=FALSE}
+## Abundance Plot (Counts
+```{r, echo=FALSE, error=TRUE}
 if (input$renderSampleAbundancePlot == "Yes"){
   communityPlotParams()
 }
 ```
-
-## Abundance Plot (Relative)
-
-A plot that details the percentage of taxa in each sample.
-
-```{r relativeabundanceplot, echo=FALSE}
+## Abundance Plot (Relative
+```{r, echo=FALSE, error=TRUE}
 if( input$renderRelativeAbundancePlot == "Yes"){
   communityPlotGenusParams()
 }
 ```
-
 ## Taxa Prevalence Plot
-
-A plot that shows the prevalence of taxa in the dataset.
-
-```{r taxaprevalenceplot, echo=FALSE}
+```{r, echo=FALSE, error=TRUE}
 if(input$renderPrevalencePlot == "Yes"){
   communityPrevalenceParams()
 }
 ```
 
 # Alpha Diversity
-
-Alpha diversity refers to the diversity that can be measured within a sample.
-
 ## Richness Plot
-
-This plot measures the richness (i.e. the number of different species represented in a community) per sample, through a user-selected diversity index.
-
-```{r richness, echo=FALSE}
+```{r, echo=FALSE, error=TRUE}
 if( input$renderRichness == "Yes"){
   richnessPlotParams()
 }
 ```
 
 # Beta Diversity
-
-Beta diversity analyzes diversity between the various samples.
-
 ## Ordination Plot
-
-Measures beta diversity through a PCA-type plot. Each point represents a sample.
-
-```{r ordplot, echo=FALSE}
+```{r, echo=FALSE, error=TRUE}
 if (input$renderOrdplot == "Yes"){
   ordinatePlotParams()
 }
 ```
-
 ## Split (Metadata/Taxa) Ordination Plot
-
-As the last plot, but with a side-by-side comparison of sample diversity and taxa diversity.
-
-```{r splitordplot, echo=FALSE}
+```{r, echo=FALSE, error=TRUE}
 if( input$renderSplitOrdplot == "Yes"){
   splitOrdParams()
 }
 ```
-
 ## Taxa Ordination Plot
-
-Compares the genetic diversity of taxa in the dataset. Each point represents one OTU.
-
-```{r taxaordplot, echo=FALSE}
+```{r, echo=FALSE, error=TRUE}
 if(input$renderTaxaplot == "Yes"){
   taxaOrdParams()
 }
 ```
 
-# PERMANOVA
-
-The PERMANOVA test can be used to assess whether or not microbiome composition is affected by a given variable. More permutations will lead to a better result, at the cost of performance.
-
-## P-value and Homogeniety Tables#
-
-The P-value (Pr(>F) on the top table) determines the significance of the results, with a value of 0 meaning the sample variable is totally insignificant, and a value of 1 representing completely significant. The lower table's P-value ensures that the results can be considered reliable.
-
-```{r pvalue, echo=FALSE}
+# PERMANOVA analysis
+##P-value and Homogeniety Tables##
+```{r, echo=FALSE, error=TRUE}
 if( input$renderPValueTables == "Yes"){
-  as.data.frame(permanova()$aov.tab)
-}
+  pValue()}
+
 ```
-```{r homogeniety, echo=FALSE}
+```{r, echo=FALSE, error=TRUE}
 if( input$renderPValueTables == "Yes"){
   homogenietyParams()}
 ```
-
 ## Network Plot
-
-The Network Plot allows the user to establish links between the OTUs, allowing them to be organized into clusters. This plot will be reworked in future versions.
-
-```{r netplot, echo=FALSE}
+```{r, echo=FALSE, error=TRUE}
 if(input$renderNetworkMap == "Yes"){
   netPlotParams()
 }

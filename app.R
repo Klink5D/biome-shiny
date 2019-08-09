@@ -16,6 +16,7 @@ library(reshape2)
 library(DirichletMultinomial)
 library(vegan)
 library(biomformat)
+library(ggplotify)
 #library(limma)
 
 #Plot_ordered_bar function | Function created by pjames1 @ https://github.com/pjames1 | All credit to him
@@ -219,8 +220,7 @@ ui <- dashboardPage(
                             box( title = "Variables", collapsible = TRUE,
                               numericInput("detectionPrevalence2", "Detection (Relative Abundance %):", min = 0.00, max = 100, value = 0.01, step = 0.01),
                               numericInput("prevalencePrevalence","Prevalence:", min = 0, max = 1, value = 0.5, step = 0.05),
-                              actionButton("coreFilterDataset", "Apply to dataset"),
-                              actionButton("coreRevertDatasetToDefault", "Undo dataset changes")
+                              checkboxInput("coreFilterDataset", "Set as active dataset", value = FALSE)
                             )
                    ),
                    tabPanel("Absolute prevalence", dataTableOutput("prevalenceAbsoluteOutput")),
@@ -240,7 +240,6 @@ ui <- dashboardPage(
         )
       )
     ),
-    
     
     # Community composition #
     tabItem(
@@ -268,36 +267,8 @@ ui <- dashboardPage(
                                                  selected = "nationality"
                                                ) 
                               )
-                              # selectInput(
-                              #   "z3",
-                              #   "Choose the intended timepoint (if applicable):",
-                              #   # For subsetting data, timepoint data
-                              #   choices = colnames("datasetMetadata"),
-                              #   selected = "timepoint.within.group"
-                              # )
                             ),
                             box("Taxonomy", width = "2", collapsible = TRUE,
-                                # selectInput(
-                                #   "v1",
-                                #   "Choose a metadata value:",
-                                #   # For subsetting data, metadata value
-                                #   choices = sapply("datasetMetadata", levels),
-                                #   selected = "lean"
-                                # ),
-                                # selectInput(
-                                #   "v2",
-                                #   "Choose a second metadata value:",
-                                #   # For subsetting data, metadata #2 value
-                                #   choices = sapply("datasetMetadata", levels),
-                                #   selected = "AAM"
-                                # ),
-                                # selectInput(
-                                #   "v3",
-                                #   "Choose a timepoint value (if applicable):",
-                                #   # For subsetting data, timepoint data value
-                                #   choices = c("","0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"),
-                                #   selected = "1"
-                                # ),
                                 selectInput(
                                   "v4",
                                   "Choose a taxonomy rank:",
@@ -311,30 +282,6 @@ ui <- dashboardPage(
                    tabPanel("Relative Abundance Plot", plotlyOutput("communityPlotGenus"))
                  )
         ),
-        #tabPanel(title = "Relative abundance", #In the title
-        #        plotlyOutput("communityPlotGenus")),
-        # tabPanel(title = "Relative abundance, averaged by metadata",
-        #   tabsetPanel(
-        #     tabPanel("Variables",
-        #           box(width = "2", collapsible = TRUE,
-        #              selectInput(
-        #                "z1Average",
-        #                "Choose a metadata column for averaging:",
-        #                # For subsetting data, #1
-        #                choices = colnames("datasetMetadata"),
-        #                selected = "bmi_group"
-        #              ),
-        #              selectInput(
-        #                "plotTypeZ1Average",
-        #                "Plot type:",
-        #                choices = c("barplot","heatmap"),
-        #                selected = "barplot"
-        #              )
-        #           )
-        #     ),
-        #      tabPanel("Plot", plotOutput("communityBarplot"))
-        #   )
-        # ),
         tabPanel(title = "Taxonomy Prevalence Plot",
                  plotlyOutput("communityPrevalence")
         )
@@ -344,20 +291,6 @@ ui <- dashboardPage(
     # Alpha Diversity #
     tabItem(
       tabName = "alphadiversity",
-      # box(
-      #   width = "2",
-      #   collapsible = TRUE,
-      #   title = "Variables",
-      #   collapsed = TRUE,
-      #   # #X (the metadata) and Y (the diversity measure)
-      #   selectInput(
-      #     "x",
-      #     "Choose a metadata column test:",
-      #     choices = colnames("datasetMetadata")
-      #   ),
-      #   selectInput("y", "Choose a diversity measure:",
-      #               choices = colnames("datasetMetadata"))
-      # ),
       br(),
       tabsetPanel(
         type = "tabs",
@@ -615,36 +548,19 @@ ui <- dashboardPage(
     tabItem(
       tabName = "permanova",
       tabsetPanel(
-        # tabPanel( title = "Population density plot",
-        #           tabsetPanel(
-        #             tabPanel(title = "Variables",
-        #                      box( title = "Variables", width= "2", collapsible = TRUE,
-        #                           selectInput("permanovaDistanceMethod","Select distance method", choices = c("bray","jacard","unifrac"), selected = "unifrac"),
-        #                           selectInput("permanovaMethod","Select ordination method",
-        #                                       choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
-        #                                       selected = "CCA"),
-        #                           selectInput("permanovaColumn","Select metadata for density plot", choices = colnames("datasetMetadata")),
-        #                           sliderInput("permanovaPlotSize", "Plot point size", min = 0.5, max = 10, step = 0.5, value = "3")
-        #                      )
-        #             ),
-        #             tabPanel(title = "Plot", plotlyOutput("densityPlot"))
-        #           )
-        # ),
         tabPanel( title = "P-Value",
                   tabsetPanel(
                     tabPanel(title = "Variables",
                              box( title = "Variables", width= "2", collapsible = TRUE,
-                                  selectInput("permanovaDistanceMethodP","Distance method (not required by all ordination methods):", choices = c("bray","jacard","unifrac"), selected = "bray"),
-                                  selectInput("permanovaMethodP","Ordination method",
-                                              choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
-                                              selected = "CCA"),
+                                  selectInput("permanovaDistanceMethodP","Dissimilarity index:", choices = c("manhattan", "euclidean", "canberra", "clark", "bray", "kulczynski", "jaccard", "gower", "altGower", "morisita", "horn", "mountford", "raup", "binomial", "chao", "cao", "mahalanobis"), selected = "bray"),
                                   selectInput("permanovaColumnP","Sample variable:", choices = colnames("datasetMetadata")),
-                                  numericInput("permanovaPermutationsP", "Number of permutations:", min = 1, step = 1, value = 99),
-                                  checkboxInput("transparentPermanova", "Transparent background", value = TRUE)
+                                  numericInput("permanovaPermutationsP", "Number of permutations:", min = 1, step = 1, value = 99)
                              )              
                     ),
                     tabPanel(title = "Data Tables",
+                             h2("P-Value table"),
                              dataTableOutput("pValue"),
+                             h2("Homogeniety table"),
                              dataTableOutput("homogeniety")
                     )
                   )
@@ -659,7 +575,7 @@ ui <- dashboardPage(
                               )              
                      ),
                      tabPanel(title = "Plot",
-                              plotOutput("topFactorPlot")
+                              plotlyOutput("topFactorPlot")
                      )
                    )
         ),
@@ -667,12 +583,18 @@ ui <- dashboardPage(
                    tabsetPanel(
                      tabPanel(title = "Variables",
                               box( title = "Variables", width= "2", collapsible = TRUE,
+                                   selectInput("permanovaPlotTypeNet", "Network Plot Type:", c("Sample Network Plot" = "samples", "Taxa/OTU Network Plot" = "taxa"), selected = "samples"),
                                    selectInput("permanovaDistanceMethodNet","Distance method (not required by all ordination methods):", choices = c("bray","jacard","unifrac"), selected = "bray"),
                                    selectInput("permanovaMethodNet","Ordination method:",
                                                choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
                                                selected = "CCA"),
                                    # sliderInput("permanovaPlotSizeNet", "Plot point size:", min = 0.5, max = 10, step = 0.5, value = "3"),
-                                   numericInput("permanovaPermutationsNet", "Number of permutations:", min = 1, step = 1, value = 99)
+                                   numericInput("permanovaPermutationsNet", "Number of permutations:", min = 1, step = 1, value = 99),
+                                   conditionalPanel(condition = "input.permanovaPlotTypeNet = 'samples'",
+                                      selectInput("permanovaMetadataNet", "Sample variable to cluster data samples:", c("Update")),
+                                      selectInput("permanovaMetaShapeNet", "Sample variable to set different point shapes:", c("Update"))
+                                    )         
+                                  )
                               )
                      ),
                      tabPanel(title ="Plot",
@@ -680,107 +602,61 @@ ui <- dashboardPage(
                      )
                    )
         )
-        # tabPanel ( title = "Heatmap", #Removed for now, readd later
-        #            tabsetPanel(
-        #              tabPanel(title = "Variables",
-        #                       box( title = "Variables", width= "2", collapsible = TRUE,
-        #                            selectInput("permanovaDistanceMethodHeat","Select distance method", choices = c("bray","jacard","unifrac"), selected = "unifrac"),
-        #                            selectInput("permanovaMethodHeat","Select ordination method",
-        #                                        choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
-        #                                        selected = "CCA"),
-        #                            numericInput("permanovaPermutationsHeat", "Number of permutations", min = 1, step = 1, value = 99)
-        #                       )              
-        #                       
-        #              ),
-        #              tabPanel(title = "Plot",
-        #                       plotlyOutput("permaHeatmap")
-        #              ) 
-        #            )
-        # )
-      )
-    ),
-    
-    tabItem(tabName = "anosim",
-            box( title = "Variables", width = "2", collapsible = TRUE, collapsed = TRUE,
-                 selectInput("anosimDistanceMethod","Select distance method", choices = c("bray","jacard","unifrac"), selected = "unifrac"),
-                 selectInput("anosimMethod","Select ordination method",
-                             choices = c("DCA", "CCA", "RDA", "CAP", "DPCoA", "NMDS", "MDS", "PCoA"),
-                             selected = "CCA"),
-                 selectInput("anosimColumn","Select metadata for density plot", choices = colnames("datasetMetadata")),
-                 sliderInput("anosimPlotSize", "Plot point size", min = 0.5, max = 10, step = 0.5, value = "3"),
-                 numericInput("anosimPermutations", "Number of permutations", min = 1, step = 1, value = 99)
-            ),
-            textOutput("pValueAnosim"),
-            textOutput("ordinateDataPrint")
-    ),
-    tabItem(tabName = "results",
-                       tabsetPanel(
-                         tabPanel("Core Microbiota",
-                                  box(
-                                    radioButtons("renderPrevTables", "Render Prevalence Tables", choices = c("Yes", "No")),
-                                    radioButtons("renderCoreTaxaSummary", "Render Core Taxa Summary", choices = c("Yes", "No")),
-                                    radioButtons("renderCoreHeatmap", "Render Core Taxa Heatmap", choices = c("Yes", "No"))
-                                  )
-                         ),            
-                         tabPanel("Community Composition",
-                                  box(
-                                    radioButtons("renderSampleAbundancePlot", "Render Abundance in Samples Plot", choices = c("Yes", "No")),
-                                    radioButtons("renderRelativeAbundancePlot", "Render Relative Abundance in Samples Plot", choices = c("Yes", "No")),
-                                    radioButtons("renderPrevalencePlot", "Render Taxa Prevalence Plot", choices = c("Yes", "No"))
-                                  )
-                                ),
-                         tabPanel("Alpha Diversity",
-                                  box(
-                                    radioButtons("renderRichness", "Render Richness Plot", choices = c("Yes", "No")),
-                                    radioButtons("printTableAlpha", "Print Table Head", choices = c("Yes", "No"))
-                                  )
-                         ),
-                         tabPanel("Beta Diversity",
-                                  box(
-                                    radioButtons("renderOrdplot", "Render Ordination Plot", choices = c("Yes", "No")), 
-                                    radioButtons("renderSplitOrdplot", "Render Split Ordination Plot", choices = c("Yes", "No")),
-                                    radioButtons("renderTaxaplot", "Render Taxa Plot", choices = c("Yes", "No"))
-                                  )
-                         ),
-                         # tabPanel("Community Landscape",
-                         #          box(
-                         #            radioButtons("renderPCA", "Render PCA Plot", choices = c("Yes","No")),
-                         #            radioButtons("renderPCOAMDS", "Render PCoA/MDS/NMDS Plot", choices = c("Yes","No")),
-                         #            radioButtons("renderTSNE", "Render t-SNE Plot", choices = c("Yes","No")),
-                         #            radioButtons("renderAbundanceHistograms", "Render Abundance Histograms", choices = c("Yes","No"))
-                         #          )
-                         # ),
-                         # tabPanel("DMM Clustering",
-                         #          box(
-                         #            radioButtons("renderModelVerification", "Render Model Verification Plot", choices = c("Yes", "No")),
-                         #            radioButtons("renderParameters", "Render Alpha and Theta Parameters", choices = c("Yes", "No")),
-                         #            radioButtons("renderTaxaContributionPlot", "Render Taxa Contribution Plots", choices = c("Yes", "No"))
-                         #          )
-                         # ),
-                         tabPanel("PERMANOVA",
-                                  box(
-                                    radioButtons("renderDensityPlot", "Render density plot", choices = c("Yes","No")),
-                                    radioButtons("renderPValueTables", "Render P-Value tables", choices = c("Yes","No")),
-                                    radioButtons("renderFactorPlot", "Render top factors barplot", choices = c("Yes","No")),
-                                    radioButtons("renderNetworkMap", "Render network map", choices = c("Yes","No"))
-                                  )
-                         )
-                       ),
-            fluidRow( 
-              box( radioButtons('format', 'Document format', c('HTML'), inline = TRUE, selected = 'HTML'),
-                   downloadButton('downloadReportAlpha', label = "Download report")
-              )
-            )
-            
+      ),
+    tabItem( tabName = "results",
+             tabsetPanel(
+               tabPanel("Core Microbiota",
+                        box(
+                          radioButtons("renderPrevTables", "Render Prevalence Tables", choices = c("Yes", "No")),
+                          radioButtons("renderCoreTaxaSummary", "Render Core Taxa Summary", choices = c("Yes", "No")),
+                          radioButtons("renderCoreHeatmap", "Render Core Taxa Heatmap", choices = c("Yes", "No"))
+                        )
+               ),            
+               tabPanel("Community Composition",
+                        box(
+                          radioButtons("renderSampleAbundancePlot", "Render Abundance in Samples Plot", choices = c("Yes", "No")),
+                          radioButtons("renderRelativeAbundancePlot", "Render Relative Abundance in Samples Plot", choices = c("Yes", "No")),
+                          radioButtons("renderPrevalencePlot", "Render Taxa Prevalence Plot", choices = c("Yes", "No"))
+                        )
+               ),
+               tabPanel("Alpha Diversity",
+                        box(
+                          radioButtons("renderRichness", "Render Richness Plot", choices = c("Yes", "No")),
+                          radioButtons("printTableAlpha", "Print Table Head", choices = c("Yes", "No"))
+                        )
+               ),
+               tabPanel("Beta Diversity",
+                        box(
+                          radioButtons("renderOrdplot", "Render Ordination Plot", choices = c("Yes", "No")), 
+                          radioButtons("renderSplitOrdplot", "Render Split Ordination Plot", choices = c("Yes", "No")),
+                          radioButtons("renderTaxaplot", "Render Taxa Plot", choices = c("Yes", "No"))
+                        )
+               ),
+               
+               tabPanel("PERMANOVA",
+                        box(
+                          radioButtons("renderDensityPlot", "Render density plot", choices = c("Yes","No")),
+                          radioButtons("renderPValueTables", "Render P-Value tables", choices = c("Yes","No")),
+                          radioButtons("renderFactorPlot", "Render top factors barplot", choices = c("Yes","No")),
+                          radioButtons("renderNetworkMap", "Render network map", choices = c("Yes","No"))
+                        )
+               )
+             ),
+             fluidRow( 
+               box( radioButtons('format', 'Document format (HTML only for now)', c('HTML'), inline = TRUE, selected = 'HTML'),
+                    downloadButton('downloadReportAlpha', label = "Download report")
+               )
+             )  
+          )   
     )
-  )
   )
 )
 
 
+
 # Server
 server <- function(input, output, session) {
-  datasetInput <- reactive({
+  datasetChoice <- reactive({
     if (input$datasetChoice == "Use sample dataset") {
       switch(
         input$datasetSample,
@@ -823,10 +699,17 @@ server <- function(input, output, session) {
     }  
   )
   
-  # To allow the user to revert dataset to default after filtering with Core Microbiota function
-  datasetInputBackup <- reactive({
-    datasetInput()
+  # New DatasetInput function works as an intermediary that checks if the dataset has been altered
+  datasetInput <- reactive({
+    if(input$coreFilterDataset == TRUE ){ # Filters the dataset
+      dataset <- corePhylo()
+    }
+    if(input$coreFilterDataset == FALSE ) { # Standard dataset input without filtering applied
+      dataset <- datasetChoice()
+    }
+    return(dataset)
   })
+  
   
   ## Core Microbiota ##
   #Filtering the dataset
@@ -839,20 +722,9 @@ server <- function(input, output, session) {
   
   # Produce phyloseq file with core OTUs only
   corePhylo <- reactive({
-    core(datasetInput(), detection = input$detectionPrevalence2, prevalence = input$prevalencePrevalence )
+    core(datasetChoice(), detection = input$detectionPrevalence2, prevalence = input$prevalencePrevalence )
   })
   
-  # Apply filters to dataset
-  observeEvent(input$coreFilterDataset, {
-    biomfile <- corePhylo()
-    return(biomfile)
-  })
-  
-  # Revert dataset to original
-  observeEvent(input$coreRevertDatasetToDefault, {
-    biomfile <- datasetInputBackup()
-    return(biomfile)
-  })
   output$corePhyloSummary <- renderPrint({ # Summary of corePhylo file
     summarize_phyloseq(corePhylo())  
   })
@@ -1471,18 +1343,10 @@ server <- function(input, output, session) {
     permnumber <- input$permanovaPermutationsP
     metadata <- input$permanovaColumnP
     adonis(t(otu) ~ meta[[metadata]],
-           data = meta, permutations = permnumber, method = "bray", parallel = getOption("mc.cores")
+           data = meta, permutations = permnumber, method = input$permanovaDistanceMethodP, parallel = getOption("mc.cores")
     )
   })
-
-  # densityPlotParams <- reactive({
-  #   p <- plot_landscape(compositionalInput(), method = input$permanovaMethod, distance = input$permanovaDistanceMethod, col = input$permanovaColumn, size = input$permanovaPlotSize)
-  #   ggplotly(p, height = 500, width = 1050)
-  # })
-  # output$densityPlot <- renderPlotly({
-  #   densityPlotParams()
-  # })
-
+  
   output$pValue <- renderDataTable({
     as.data.frame(permanova()$aov.tab)
   })
@@ -1511,7 +1375,7 @@ server <- function(input, output, session) {
     coef <- coefficients(permanova)["column1",]
     top.coef <- coef[rev(order(abs(coef)))[1:20]] #top 20 coefficients
     par(mar = c(3, 14, 2, 1))
-    p <- barplot(sort(top.coef), horiz = T, las = 1, main = "Top taxa")
+     p <- barplot(sort(top.coef), horiz = T, las = 1, main = "Top taxa")
     if(input$transparentPermanova == TRUE){
       p <- p +
         theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
@@ -1524,9 +1388,9 @@ server <- function(input, output, session) {
   })
 
   netPlotParams <- reactive({
-    n <- make_network(compositionalInput(), type = "samples", distance = input$permanovaDistanceMethodNet)
+    n <- make_network(compositionalInput(), type = input$permanovaPlotTypeNet, distance = input$permanovaDistanceMethodNet)
     #p <- plot_network(n, compositionalInput(), type = "taxa", color= ntaxa(otu_table(compositionalInput())))
-    p <- plot_network(n, compositionalInput(), type = "samples", shape = "nationality", color= "nationality")
+    p <- plot_network(n, compositionalInput(), shape = "nationality", color= "nationality")
     
         if(input$transparentPermanova == TRUE){
       p <- p +
