@@ -5,6 +5,7 @@
 Biome-shiny has, at its core, the Microbiome and Phyloseq libraries. As such, the test dataset used to demonstrate the app's features can also be found within the standalone Microbiome library.
 
 ![](https://i.gyazo.com/8916f6881ec52e16dc943949e1a72225.png)
+
 *Dashboard menu with current features*
 
 The app uses the plotly library to generatw interactive plots, to make it easier to visualize data and save results.
@@ -15,6 +16,7 @@ In addition, microbiome's sample datasets can be used for testing purposes.
 This guide, will use the *dietswap* sample dataset to showcase the app's features.
 
 ![](https://i.gyazo.com/31c1866b0c1e71d4d3e4cf31bc959de6.png, "Uploading a dataset")
+
 *Dataset upload menu*
 Be sure to click "Update Dataset" when selecting the first dataset and when switching from one dataset to another.
 
@@ -22,6 +24,7 @@ Be sure to click "Update Dataset" when selecting the first dataset and when swit
 The Microbiome library includes a simple dataset summarization function, summarize_phyloseq(). This overview can be examined in the "Phyloseq Summary" tab.
 
 ![](https://i.gyazo.com/cb6ad1787f7d273f2d8a4527da9f4924.png)
+
 *Phyloseq summary window*
 
 ##### 4. Core Microbiota (Data filtering and visualization)
