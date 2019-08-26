@@ -18,6 +18,7 @@ This guide, will use the *dietswap* sample dataset to showcase the app's feature
 ![](https://i.gyazo.com/31c1866b0c1e71d4d3e4cf31bc959de6.png, "Uploading a dataset")
 
 *Dataset upload menu*
+
 Be sure to click "Update Dataset" when selecting the first dataset and when switching from one dataset to another.
 
 ##### 3. Phyloseq Summary
@@ -37,7 +38,9 @@ This section of the program allows the user to view the absolute and relative ab
 
 ###### 5.1. Abundance Plots
 ![](https://i.gyazo.com/204a382ea6d4dbf414f2f9622a7329cd.png)
+
 *Variables to generate abundance plots*
+
 
 **Sample variable**, as the name indicates, refers to the metadata that refers to each individual sample in the dataset, although it's possible to use other variables, doing so might produce undesirable results.
 
