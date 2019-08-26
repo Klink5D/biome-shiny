@@ -50,8 +50,11 @@ The **Taxonomy** box prompts the user to pick the taxonomic level of abundance p
 Ticking **Transparent background** will make the plot's background transparent.
 
 ![](https://i.gyazo.com/1d02a7e96edb36f46505de60f0cf1a75.png)
+
 *Abundance plot: Abundance of phylum in samples, sorted by nationality*
+
 ![](https://i.gyazo.com/ed4e654daab40b35458e130da9d85840.png)
+
 *Abundance plot: Relative abundance of phylum in samples, sorted by nationality*
 
 ###### 5.2. Prevalence Plot
@@ -59,6 +62,7 @@ It's also possible to produce a prevalence plot. As the name indicates, the plot
 The app takes the **Taxonomy** and **Transparent background** variables from the previous section to generate the prevalence plot. This time, the plot was generated at the Family taxonomic level.
 
 ![](https://i.gyazo.com/0645202faf38cd5957db6051859aafce.png)
+
 *Prevalence Plot: Family prevalence in dataset*
 
 **NOTE: Due to limitations in the ggplot2 library, the prevalence plot will fail if there are more than 25 taxa in the chosen rank.**
@@ -69,47 +73,56 @@ Alpha diversity refers to the diversity within a particular area, and is usually
 Evenness represents how evenly species are distributed in the sample. A high evenness score means species have similar representation in the ecosystem. This table shows various evenness measures per sample.
 
 ![](https://i.gyazo.com/909d3914a0f6bc8be54b6ddc5653746d.png)
+
 *Evenness table*
 
 ###### 6.2. Abundance Table
 Abundance is the number of each species present in the ecosystem. It can be represented as a count (absolute abundance) or a percentage (relative abundance). This section presents the abundance of each species/OTU as counts and percentages.
 
 ![](https://i.gyazo.com/76285f4c6154713db0ead40273778484.png)
+
 *Counts table*
 
 ![](https://i.gyazo.com/1ddfd89b0e72d384ab7fd1a4084ccae9.png)
+
 *Relative abundance table*
 
 ###### 6.3. Metadata Table (with diversity measures)
 The metadata table shows the sample variables associated with each sample, with a series of measures of diversity for each sample.
 
 ![](https://i.gyazo.com/3600212dbaa096641e64be00cbe5a61e.png)
+
 *Sample variable/Diversity measure table*
 
 ###### 6.4. Richness Plot
 This plot represents alpha diversity in each sample, through user-selected diversity measures. Sample variables can be used to sort samples and gain more information from the plot.
 
 ![](https://i.gyazo.com/9b78a473611946a91b52c044fdcbe52f.png)
+
 *Variables menu*
 
 ![](https://i.gyazo.com/a28f039c28e2703d5bb3dbe421fe5fc1.png)
+
 *Richness plot: Simpson diversity index, samples sorted by nationality and colored by sex*
 
 #### 7. Beta Diversity
 Beta diversity refers to diversity between samples or ecosystems. It can be measured through the variation of species between ecosystems. Biome-shiny uses ordination plots to visualize beta diversity.
 
 ![](https://i.gyazo.com/736787b69c9e067d67e28597f0f3abf4.png)
+
 *Variables menu for the ordination plot*
 
 ![](https://i.gyazo.com/a298b34da5e0a0937ee719d95e81010b.png)
+
 *Ordination plot*
 
 #### 8. PERMANOVA Test
 The PERMANOVA test is a statistical test that can be used to, for example, find the importance of a certain sample variable for the genetic composition of a certain environmnet (for example, if two distinct diets will lead to a vastly different gut microbiome). In addition to performing the test and exporting results in a table, the application also creates a plot to verify which OTUs are the primary contributors to the differences between samples, and a sample network plot.
 
-##### PERMANOVA Test Table
+##### 8.1. PERMANOVA Test Table
 
 ![](https://i.gyazo.com/e117dc0a839fafdfa022a16dff3b58c5.png)
+
 *PERMANOVA test variables*
 
 **Dissimilarity index** refers to the index used for the PERMANOVA test.
@@ -117,10 +130,12 @@ The PERMANOVA test is a statistical test that can be used to, for example, find 
 **Number of permutations** is self-explanatory.
 
 The output is a table with the P-Value, Pr(>F), which assumes a value between 0 and 1, and determines the significance of the tested variable to the genetic composition of the samples.
+
 ![](https://i.gyazo.com/e8c2104c6bd38d768cf0e2addd88ef31.png)
+
 *P-Value table*
 
-##### Top Factors Plot
+##### 8.2. Top Factors Plot
 This plot represents the top taxa responsible for sample dissimilarity.
 
 ![](https://i.gyazo.com/b19512253933ce63b697779969e0ba7a.png)
@@ -129,22 +144,26 @@ This plot represents the top taxa responsible for sample dissimilarity.
 *Top factors plot*
 ##### Network Plot
 The network plot can be used to cluster samples or OTUs by similarity.
+
 ![](https://i.gyazo.com/e1b09cbcaa23e3258df490e303d5b920.png) ![](https://i.gyazo.com/9ebc5de20cf0a06b0d2f5f9675894e18.png)
+
 *Variables menu. Sample-type network plots need a sample variable to cluster samples into, and optionally a shape to distinguish samples*
 
 ![](https://i.gyazo.com/12d0a9863fea71916e4548d770355e4a.png)
+
 *Sample network plot*
 
 #### 9. Exporting Results
 Generated plots can be exported to an .html file, which will include a short description of the plot along with the interactive plot itself. This section is still in need of improvement and will be enhanced to include a code output (to generate plots without relying on Biome-shiny). Note that only plots that have been generated with the app will appear in the output file.
 
 ![](https://i.gyazo.com/0c6b9b435aaffd489d5cd07e75799c86.png)
+
 *Output menu*
 
 Right now, the only available output format is an .html file. The user can pick which plots and tables to generate in the final report.
 
 
-#### Citations
+#### 10. Citations
 
 Winston Chang, Joe Cheng, JJ Allaire, Yihui Xie and Jonathan McPherson (2018). shiny: Web Application Framework for R. R package version 1.2.0. https://CRAN.R-project.org/package=shiny
 
