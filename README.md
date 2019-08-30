@@ -1,5 +1,7 @@
 # Biome-shiny
-##  A Shiny R app for microbiome analysis, built around the "microbiome" package
+##  A Shiny R app for microbiome visualization, built around the "microbiome" package
+
+
 
 #### 1. Features
 Biome-shiny has, at its core, the Microbiome and Phyloseq libraries. As such, the test dataset used to demonstrate the app's features can also be found within the standalone Microbiome library.
@@ -31,7 +33,15 @@ The Microbiome library includes a simple dataset summarization function, summari
 ##### 4. Core Microbiota (Data filtering and visualization)
 The "Core Microbiota" tab lets the user filter the active dataset by an input detection and prevalence value. It allows the user to view which species/OTUs remain in the filtered dataset, and get a Phyloseq summary of the filtered data. The application also outputs a prevalence table, allowing the user to know how the number of times a species shows up in samples.
 
+![](https://i.gyazo.com/79c1c556e3bebf93b740095e9264e4bc.png)
+
+*Data filtering variables. Ticking "set as active dataset" will set the filtered data as the working dataset*
+
 The user can also visualize core microbiota through a heatmap, which requires the user to input a minimum detection threshold value.
+
+![](https://i.gyazo.com/0cfbedd65f9ed931683c8fe2534a0417.png)
+
+*Core OTU heatmap. Measures how often OTUs have a certain relative abundance value or higher*
 
 ##### 5. Community Composition
 This section of the program allows the user to view the absolute and relative abundance of taxa in samples. The abundance plots can be separated by metadata values (i.e. dividing samples by nationality).
