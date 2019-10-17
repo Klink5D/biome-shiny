@@ -17,10 +17,7 @@ library(DirichletMultinomial)
 library(vegan)
 library(biomformat)
 library(ggplotify)
-<<<<<<< HEAD
 library(RColorBrewer)
-=======
->>>>>>> 180ca1c4433e506e1c0a28e7be7580b2d90d8f88
 #library(limma)
 
 
@@ -1418,12 +1415,9 @@ server <- function(input, output, session) {
                       choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "permanovaMetaShapeNet",
                     choices = colnames(meta(datasetInput())))
-<<<<<<< HEAD
     }, error = function(e){
       simpleError(e)
     })
-=======
->>>>>>> 180ca1c4433e506e1c0a28e7be7580b2d90d8f88
   })
 
   permanova <- reactive({
@@ -1431,12 +1425,8 @@ server <- function(input, output, session) {
     meta <- meta(compositionalInput())
     permnumber <- input$permanovaPermutationsP
     metadata <- input$permanovaColumnP
-<<<<<<< HEAD
     m <- meta[[metadata]]
     a <- adonis(t(otu) ~ m,
-=======
-    adonis(t(otu) ~ meta[[metadata]],
->>>>>>> 180ca1c4433e506e1c0a28e7be7580b2d90d8f88
            data = meta, permutations = permnumber, method = input$permanovaDistanceMethodP, parallel = getOption("mc.cores")
     )
     b <- as.data.frame(a$aov.tab)
@@ -1473,13 +1463,6 @@ server <- function(input, output, session) {
     top.coef <- coef[rev(order(abs(coef)))[1:20]] #top 20 coefficients
     par(mar = c(3, 14, 2, 1))
      p <- barplot(sort(top.coef), horiz = T, las = 1, main = "Top taxa")
-<<<<<<< HEAD
-=======
-    # if(input$transparentPermanovaTopfactors == TRUE){
-    #   p <- p +
-    #     theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
-    # }
->>>>>>> 180ca1c4433e506e1c0a28e7be7580b2d90d8f88
     print(p)
   })
   output$topFactorPlot <- renderPlot({
@@ -1503,40 +1486,6 @@ server <- function(input, output, session) {
   output$netPlot <- renderPlotly({
     netPlotParams()
   })
-<<<<<<< HEAD
-=======
-
-  # output$permaHeatmap <- renderPlotly({
-  #   xp <- plot_heatmap(compositionalInput(), distance = ordinate(compositionalInput(), distance = input$permanovaDistanceMethodHeat), method = input$permanovaMethodHeat)
-  #   ggplotly(p, height = 500, width = 1050)
-  # })
-  
-  # output$permaHeatmap <- renderPlotly({
-  #   permaHeatmapParams()
-  # })
-  
-  # ANOSIM #
-  #Update metadata column#
-  # observe({
-  #   updateSelectInput(session, "anosimColumn",
-  #                     choices = colnames(meta(datasetInput())))
-  # })
-  # 
-  # anosim <- reactive({
-  #   otu <- abundances(compositionalInput())
-  #   meta <- meta(compositionalInput())
-  #   permnumber <- input$anosimPermutations
-  #   metadata <- input$anosimColumn
-  # })
-  # 
-  # output$pValueAnosim <- renderPrint({
-  #   otu <- abundances(compositionalInput())
-  #   meta <- meta(compositionalInput())
-  #   metadata <- input$anosimColumn
-  #   vegan::anosim(otu, meta[[metadata]], permutations = 99, distance = "bray", parallel = getOption("mc.cores"))
-  # })
-  
->>>>>>> 180ca1c4433e506e1c0a28e7be7580b2d90d8f88
   
   
   ### RESULTS ###
