@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Biome-shiny
 ## A Shiny R App for Microbiome Visualization
 
@@ -365,4 +364,3 @@ Yihui Xie (2019). knitr: A General-Purpose Package for Dynamic Report Generation
 Bob Rudis (2019). hrbrthemes: Additional Themes, Theme Components and Utilities for 'ggplot2'. R package version 0.6.0. https://CRAN.R-project.org/package=hrbrthemes
 
 pjames1 @ https://github.com/pjames1 for the plot_ordered_bar function
->>>>>>> d09aab102cd2a768d3ead844352e2d31972aba6a
