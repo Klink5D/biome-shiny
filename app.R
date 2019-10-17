@@ -1,4 +1,4 @@
-# Biome-shiny 0.7
+  # Biome-shiny 0.7
 
 library(shiny)
 library(shinydashboard)
@@ -17,7 +17,9 @@ library(DirichletMultinomial)
 library(vegan)
 library(biomformat)
 library(ggplotify)
+library(RColorBrewer)
 #library(limma)
+
 
 #Plot_ordered_bar function | Created by pjames1 @ https://github.com/pjames1 
 plot_ordered_bar<-function (physeq, x = "Sample", 
@@ -60,6 +62,38 @@ plot_ordered_bar<-function (physeq, x = "Sample",
   }
   return(p)
 }
+
+#Function to dynamically set plot width (and height) for plots
+plot_width <- function(data, mult = 12, min.width = 1060, otu.or.tax = "otu"){
+  if(mult <= 0){
+    print("Error: Variable 'mult' requires a value higher than 0")
+    return(NULL)
+  }
+  if(min.width <= 0){
+    print("Error: Variable 'min.width' requires a value higher than 0")
+    return(NULL)
+  }
+  if(otu.or.tax == "otu"){
+    width <- ncol(otu_table(data))*mult
+    if(width <= min.width){ #Value of width needs to be higher than minimum width, default 1060px
+      width <- min.width
+      return(width)
+    } else {
+      return(width)
+    }
+  }
+  if(otu.or.tax == "tax"){
+    width <- nrow(tax_table(data))*mult
+    if(width <= min.width){
+      width <- min.width
+      return(width)
+    } else {
+      return(width)
+    }
+  }
+}
+
+
 
 # Functions to dynamically generate chunks for the final report 
 tidy_function_body <- function(fun) {
@@ -138,7 +172,8 @@ ui <- dashboardPage(
     )
   ),
   
-  dashboardBody(tabItems(
+  dashboardBody(
+    tabItems(
     #Introduction tab#
     tabItem(
       tabName = "intro",
@@ -167,7 +202,7 @@ ui <- dashboardPage(
         conditionalPanel(
           condition = "input.datasetType == '.biom file without .csv mapping file'",
           fileInput(
-            "dataset",
+            "dataset3",
             "Dataset:",
             multiple = FALSE,
             accept = c(".biom"), placeholder="Phyloseq .biom files"
@@ -177,7 +212,7 @@ ui <- dashboardPage(
         conditionalPanel(
           condition = "input.datasetType == '.biom file with .csv mapping file'",
           fileInput(
-            "dataset",
+            "dataset2",
             "Dataset:",
             multiple = FALSE,
             accept = c(".biom"), placeholder="Phyloseq .biom files"
@@ -235,7 +270,7 @@ ui <- dashboardPage(
                                 textInput("detectionMin", label = "Minimum detection threshold (Relative Abundance(%))", value = "0.0000001"),
                                 checkboxInput("transparentCoreHeatmap", "Transparent background", value = TRUE)
                               ),
-                            box(plotlyOutput("coreHeatmap", width = "1000px", height = "500px"))
+                            box(width = 10, div(style = 'overflow-x: scroll', plotlyOutput("coreHeatmap", width = "100%", height = "100%")))
                    )
         )
       )
@@ -278,12 +313,12 @@ ui <- dashboardPage(
                                 )
                             )
                    ),
-                   tabPanel("Absolute Abundance Plot", plotlyOutput("communityPlot")),
-                   tabPanel("Relative Abundance Plot", plotlyOutput("communityPlotGenus"))
+                   tabPanel("Absolute Abundance Plot", div(style = 'overflow-x: scroll', plotlyOutput("communityPlot", height = "100%"))),
+                   tabPanel("Relative Abundance Plot", div(style = 'overflow-x: scroll', plotlyOutput("communityPlotGenus", height = "100%")))
                  )
         ),
         tabPanel(title = "Taxonomy Prevalence Plot",
-                 plotlyOutput("communityPrevalence")
+                 plotlyOutput("communityPrevalence", height = "100%")
         )
       )
     ),
@@ -335,7 +370,7 @@ ui <- dashboardPage(
                              ),
                              box(radioButtons("richnessChoices", "Choose diversity measures" ,choices = c("Observed", "Chao1", "ACE", "Shannon", "Simpson", "InvSimpson", "Fisher"), selected = "Shannon"))),
                    tabPanel( title = "Plot",
-                             plotlyOutput("richnessPlot"))))
+                             div(style = 'overflow-x: scroll', plotlyOutput("richnessPlot", height = "100%")))))
       )
     ),
     
@@ -433,9 +468,6 @@ ui <- dashboardPage(
                                width = "2",
                                collapsible = TRUE,
                                collapsed = FALSE,
-                               # selectInput(
-                               #   "xb3", "Choose a metadata column:", choices = colnames("datasetMetadata"), selected = "bmi_group"
-                               # ),
                                selectInput(
                                  "zb",
                                  "Taxonomy rank:",
@@ -667,35 +699,69 @@ server <- function(input, output, session) {
         "peerj32" = peerj32
       )
     } else {
-      req(input$dataset)
       if(input$datasetType == ".biom file including sample variables") { #Simple .biom upload with sample_data() already set
-        datapath <- input$dataset$datapath
-        biomfile <- import_biom(datapath)
-        return(biomfile)
+          req(input$dataset)
+          tryCatch({
+            datapath <- input$dataset$datapath
+            biomfile <- import_biom(datapath)
+            return(biomfile)
+          }, error = function(e){
+            simpleError("Error importing the .biom file.")
+          })
       }
       if(input$datasetType == ".biom file with .csv mapping file"){ #Loads a .csv along with the .biom
-        datapath <- input$dataset$datapath
-        datapathMetadata <- input$datasetMetadata$datapath
-        a <- import_biom(datapath)
-        b <- sample_data(as.data.frame(read.csv(datapathMetadata, skipNul = TRUE)))
-        biomfile <- merge_phyloseq(a,b)
-        return(biomfile)
-      }
-      if(input$datasetType == ".biom file without .csv mapping file"){ #Loads a .biom file and generates sample metadata
-          datapath <- input$dataset$datapath
+        req(input$dataset2)
+        req(input$datapathMetadata)
+        tryCatch({
+          datapath <- input$dataset2$datapath
           a <- import_biom(datapath)
-          if(input$samplesAreColumns == TRUE){ 
-            samples.out <- colnames(otu_table(a))
-          }
-          if(input$samplesAreColumns == FALSE){
-            samples.out <- rownames(otu_table(a))
-          }
-          subject <- sapply(strsplit(samples.out, "D"), `[`, 1)
-          samdf <- data.frame(Subject=subject)
-          rownames(samdf) <- samples.out
-          b <- sample_data(samdf)
-          biomfile <- merge_phyloseq(a, b)
+        }, error = function(e){
+          simpleError("Error importing the .biom file.")
+        })
+        
+        tryCatch({
+          datapathMetadata <- input$datasetMetadata$datapath
+          b <- sample_data(as.data.frame(read.csv(datapathMetadata, skipNul = TRUE)))
+        }, error = function(e){
+          simpleError("Error importing the .csv mapping file.")
+        })
+        
+        tryCatch({
+          biomfile <- merge_phyloseq(a,b)
           return(biomfile)
+        }, error = function(e){
+          simpleError("Error in merging .biom file with .csv mapping file.")
+        })
+      }
+      
+      if(input$datasetType == ".biom file without .csv mapping file"){ #Loads a .biom file and generates sample metadata
+          req(input$dataset3)
+          tryCatch({
+            datapath <- input$dataset3$datapath
+            a <- import_biom(datapath)
+          }, error = function(e){
+            simpleError("Error importing .biom file")
+          })
+          tryCatch({
+            if(input$samplesAreColumns == TRUE){ 
+              samples.out <- colnames(otu_table(a))
+            }
+            if(input$samplesAreColumns == FALSE){
+              samples.out <- rownames(otu_table(a))
+            }
+            subject <- sapply(strsplit(samples.out, "D"), `[`, 1)
+            samdf <- data.frame(Subject=subject)
+            rownames(samdf) <- samples.out
+            b <- sample_data(samdf)
+          }, error = function(e){
+            simpleError("Error generating sample variables")
+          })
+          tryCatch({
+            biomfile <- merge_phyloseq(a, b)
+            return(biomfile)
+          }, error = function(e){
+            simpleError("Error merging sample variables with .biom file")
+          })
         }
       }
     }  
@@ -716,10 +782,14 @@ server <- function(input, output, session) {
   ## Core Microbiota ##
   #Filtering the dataset
   prevalenceAbsolute <- reactive({
-    as.data.frame(prevalence(compositionalInput(), detection = input$detectionPrevalence2/100, sort = TRUE, count = TRUE))
+    a <- as.data.frame(prevalence(compositionalInput(), detection = input$detectionPrevalence2/100, sort = TRUE, count = TRUE))
+    names(a) <- c("Prevalence (counts)")
+    return(a)
   })
   prevalenceRelative <- reactive({
-    as.data.frame(prevalence(compositionalInput(), detection = input$detectionPrevalence2/100, sort = TRUE))
+    a <- as.data.frame(prevalence(compositionalInput(), detection = input$detectionPrevalence2/100, sort = TRUE))
+    names(a) <- c("Prevalence (relative)")
+    return(a)
   })
   
   # Produce phyloseq file with core OTUs only
@@ -741,28 +811,18 @@ server <- function(input, output, session) {
     datatable(prevalenceRelative())
   })
   
-  # Visualization (lineplots and heatmaps)
-  coreLineplotParams <- reactive({
-    prevalences <- as.numeric(input$prevalenceSelection)
-    detections <- as.numeric(unlist(strsplit(input$detectionForLineplot, split = ",")))/100
-    print(detections)
-    lineplot <- plot_core(compositionalInput(), prevalences = prevalences, detections = detections, plot.type = "lineplot") + xlab("Relative Abundance (%)")
-    plotly_build(lineplot)
-  })
-  output$coreLineplot <- renderPlotly({
-    coreLineplotParams()
-  })
   coreHeatmapParams <- reactive({
     # Core with compositionals:
     #prevalences <- as.numeric(input$prevalenceSelectionHeat)
     detections <- 10^seq(log10(as.numeric(input$detectionMin)), log10(1), length = 10)
-    gray <- heat.colors(3)
+    gray <- rev(brewer.pal(5,"Spectral"))
     coreplot <- plot_core(compositionalInput(), plot.type = "heatmap", colours = gray, prevalences = 0, detections = detections) + xlab("Detection Threshold (Relative Abundance (%))")
     if(input$transparentCoreHeatmap == TRUE){
       coreplot <- coreplot +
         theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
     }
-    ggplotly(coreplot, height = 500, width = 900)
+    
+    ggplotly(coreplot, height = plot_width(compositionalInput(), mult = 10, otu.or.tax = "tax"), width = 900 )
   })
   output$coreHeatmap <- renderPlotly({
     coreHeatmapParams()
@@ -772,6 +832,7 @@ server <- function(input, output, session) {
   
   # Updating SelectInputs when database changes #
   observeEvent(input$datasetUpdate, {
+    tryCatch({
     updateSelectInput(session, "z1",
                       choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "z2",
@@ -784,6 +845,9 @@ server <- function(input, output, session) {
                       choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "v4Plot",
                       choices = colnames(tax_table(datasetInput())))
+    }, error = function(e) {
+      simpleError(e)
+    })
   })
   
   #Update metadata value selectInputs for CC Analysis
@@ -803,15 +867,17 @@ server <- function(input, output, session) {
   # Abundance of taxa in sample variable by taxa
   communityPlotParams <- reactive ({
     if(input$communityPlotFacetWrap == FALSE){
-      compositionplot <- plot_ordered_bar(datasetInput(), x=input$z1, y="Abundance", fill=input$v4, title=paste0("Abundance by ", input$v4, " in ", input$z1))  + geom_bar(stat="identity") + theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90)
+      compositionplot <- plot_ordered_bar(datasetInput(), x=input$z1, y="Abundance", fill=input$v4, title=paste0("Abundance by ", input$v4, " in ", input$z1))  + geom_bar(stat="identity") + theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90) + rremove("xlab") + rremove("ylab")
     } else {
-      compositionplot <- plot_ordered_bar(datasetInput(), x=input$z1, y="Abundance", fill=input$v4, title=paste0("Abundance by ", input$v4, " in ", input$z1))  + geom_bar(stat="identity") + facet_grid(paste('~',input$z2), scales = "free", space = "free") + theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90)
+      compositionplot <- plot_ordered_bar(datasetInput(), x=input$z1, y="Abundance", fill=input$v4, title=paste0("Abundance by ", input$v4, " in ", input$z1))  + geom_bar(stat="identity") + theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90) + facet_grid(paste('~',input$z2), scales = "free", space = "free") + rremove("xlab") + rremove("ylab")
     }
     if(input$transparentCommunityPlot == TRUE){
       compositionplot <- compositionplot + 
         theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
     }
-    ggplotly(compositionplot, height = 500, width = 1060)
+    #p <- ggplotly(compositionplot, height = 500, width = ncol(otu_table(datasetInput()))*12) %>% layout(xaxis = list(title = input$z1, automargin = TRUE), yaxis = list(title = "Abundance", automargin = TRUE))
+    p <- ggplotly(compositionplot, height = 500, width = plot_width(datasetInput())) %>% layout(xaxis = list(title = input$z1, automargin = TRUE), yaxis = list(title = "Abundance", automargin = TRUE))
+    return(p)
   })
   output$communityPlot <- renderPlotly({
     communityPlotParams()  
@@ -822,41 +888,43 @@ server <- function(input, output, session) {
       compositionplot <- plot_ordered_bar(compositionalInput(), x=input$z1, fill=input$v4, title=paste0("Relative abundance by ", input$v4, " in ", input$z1))  + geom_bar(stat="identity") +
         guides(fill = guide_legend(ncol = 1)) +
         scale_y_percent() +
-        theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90)
+        theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90) + rremove("xlab") + rremove("ylab")
     } else {
       compositionplot <- plot_ordered_bar(compositionalInput(), x="Sample",  fill=input$v4, title=paste0("Relative abundance by ", input$v4, " in ", input$z1))  + geom_bar(stat="identity") +
         guides(fill = guide_legend(ncol = 1)) +
-        scale_y_percent() +
-        theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90) + facet_grid(paste('~',input$z2),scales = "free", space = "free")
+        scale_y_percent() + facet_grid(paste('~',input$z2),scales = "free", space = "free") + rremove("xlab") + rremove("ylab")
     }
     if(input$transparentCommunityPlot == TRUE){
       compositionplot <- compositionplot + 
         theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
     }
-    ggplotly(compositionplot, height = 500, width = 1050)
+    p <- ggplotly(compositionplot, height = 500, width = plot_width(datasetInput())) %>% layout(xaxis = list(title = "Sample", automargin = TRUE), yaxis = list(title = "Abundance", automargin = TRUE))
+    return(p)
   })
   output$communityPlotGenus <- renderPlotly({
     communityPlotGenusParams()
   })
   
-  # Barplot, averaged by z1Average group
-  communityBarplotParams <- reactive({
-    compplot <- plot_composition(datasetSubsetInput(), average_by = input$z1Average, plot.type = input$plotTypeZ1Average )
-    print(compplot)
-    #plotly_build(compplot)
-  })
-  output$communityBarplot <- renderPlotly({
-    communityBarplotParams()
-  })
+  # # Barplot, averaged by z1Average group
+  # communityBarplotParams <- reactive({
+  #   compplot <- plot_composition(datasetSubsetInput(), average_by = input$z1Average, plot.type = input$plotTypeZ1Average )
+  #   print(compplot)
+  #   #plotly_build(compplot)
+  # })
+  # output$communityBarplot <- renderPlotly({
+  #   communityBarplotParams()
+  # })
   
   # Taxa prevalence plot
   communityPrevalenceParams <- reactive({
-    prevplot <- plot_taxa_prevalence(compositionalInput(), input$v4) + theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90) #If OTUs > 25 it fails
+    prevplot <- plot_taxa_prevalence(compositionalInput(), input$v4) + theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90) + #If OTUs > 25 it fails
+    rremove("xlab") + rremove("ylab")
     if(input$transparentCommunityPlot == TRUE){
       prevplot <- prevplot + 
         theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
     }
-    ggplotly(prevplot, height = 500, width = 1000)
+    p <- ggplotly(prevplot, height = 500, width = 1000) %>%  layout(xaxis = list(title = "Average count abundance (log scale)", automargin = TRUE), yaxis = list(title = "Taxa prevalence", automargin = TRUE))
+    return(p)
   })
   
   output$communityPrevalence <- renderPlotly({
@@ -901,14 +969,16 @@ server <- function(input, output, session) {
   
   # Updating SelectInputs when database changes #
   observeEvent(input$datasetUpdate, {
-
-    
+    tryCatch({
     updateSelectInput(session, "x",
                       choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "x2", choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "x3", choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "y",
                       choices = colnames(alpha(datasetInput())))
+    }, error = function(e){
+      simpleError(e)
+    })
   })
   
   
@@ -932,20 +1002,21 @@ server <- function(input, output, session) {
         x = input$x2,
         measures = input$richnessChoices,
         color = input$x3
-      ) + theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90) + ylab(paste("Alpha Diversity Measure (", input$richnessChoices , ")"))
+      ) + theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90)
     } else {
       richnessplot <- plot_richness(
         datasetInput(),
         x = input$x2,
         measures = input$richnessChoices,
-        color = input$x3
-      ) + facet_grid(paste('~',input$x),scales = "free", space = "free") + theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90) + ylab(paste("Alpha Diversity Measure (", input$richnessChoices , ")"))
+        color = input$x3 ) + 
+        facet_grid(paste('~',input$x),scales = "free", space = "free") + theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90)
     }
     if(input$transparentRichness == TRUE){
       richnessplot <- richnessplot +  
       theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
     }
-    ggplotly(richnessplot, height = 500, width = 1050)
+    richnessplot <- richnessplot + rremove("xlab") + rremove("ylab")
+    p <- ggplotly(richnessplot, height = 500, width = plot_width(datasetInput())) %>% layout(xaxis = list(title = input$x2, automargin = TRUE), yaxis = list(title = paste("Alpha Diversity Measure (", input$richnessChoices , ")"), automargin = TRUE))
   })
   
   output$richnessPlot <- renderPlotly({
@@ -956,8 +1027,7 @@ server <- function(input, output, session) {
   
   # Updating SelectInputs when dataset changes#
   observeEvent(input$datasetUpdate, {
-
-    
+    tryCatch({
     updateSelectInput(session, "xb",
                       choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "xb2",
@@ -970,6 +1040,9 @@ server <- function(input, output, session) {
                       choices = colnames(tax_table(datasetInput())))
     updateSelectInput(session, "zbsplit",
                       choices = colnames(tax_table(datasetInput())))
+    }, error = function(e){
+      simpleError(e)
+    })
   })
   
   compositionalInput <- reactive({
@@ -1331,6 +1404,7 @@ server <- function(input, output, session) {
   ## PERMANOVA ##
   #Update metadata column when dataset changes
   observeEvent(input$datasetUpdate, {
+    tryCatch({
     updateSelectInput(session, "permanovaColumn",
                       choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "permanovaColumnP",
@@ -1341,6 +1415,9 @@ server <- function(input, output, session) {
                       choices = colnames(meta(datasetInput())))
     updateSelectInput(session, "permanovaMetaShapeNet",
                     choices = colnames(meta(datasetInput())))
+    }, error = function(e){
+      simpleError(e)
+    })
   })
 
   permanova <- reactive({
@@ -1348,13 +1425,17 @@ server <- function(input, output, session) {
     meta <- meta(compositionalInput())
     permnumber <- input$permanovaPermutationsP
     metadata <- input$permanovaColumnP
-    adonis(t(otu) ~ meta[[metadata]],
+    m <- meta[[metadata]]
+    a <- adonis(t(otu) ~ m,
            data = meta, permutations = permnumber, method = input$permanovaDistanceMethodP, parallel = getOption("mc.cores")
     )
+    b <- as.data.frame(a$aov.tab)
+    names(b) <- c(metadata, "Df", "Sum Sq", "Mean Sq", "F value", "P value")
+    print(b)
   })
   
   output$pValue <- renderDataTable({
-    as.data.frame(permanova()$aov.tab)
+    permanova()
   })
 
   homogenietyParams <- reactive({
@@ -1382,10 +1463,6 @@ server <- function(input, output, session) {
     top.coef <- coef[rev(order(abs(coef)))[1:20]] #top 20 coefficients
     par(mar = c(3, 14, 2, 1))
      p <- barplot(sort(top.coef), horiz = T, las = 1, main = "Top taxa")
-    # if(input$transparentPermanovaTopfactors == TRUE){
-    #   p <- p +
-    #     theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
-    # }
     print(p)
   })
   output$topFactorPlot <- renderPlot({
@@ -1409,37 +1486,6 @@ server <- function(input, output, session) {
   output$netPlot <- renderPlotly({
     netPlotParams()
   })
-
-  # output$permaHeatmap <- renderPlotly({
-  #   xp <- plot_heatmap(compositionalInput(), distance = ordinate(compositionalInput(), distance = input$permanovaDistanceMethodHeat), method = input$permanovaMethodHeat)
-  #   ggplotly(p, height = 500, width = 1050)
-  # })
-  
-  # output$permaHeatmap <- renderPlotly({
-  #   permaHeatmapParams()
-  # })
-  
-  # ANOSIM #
-  #Update metadata column#
-  # observe({
-  #   updateSelectInput(session, "anosimColumn",
-  #                     choices = colnames(meta(datasetInput())))
-  # })
-  # 
-  # anosim <- reactive({
-  #   otu <- abundances(compositionalInput())
-  #   meta <- meta(compositionalInput())
-  #   permnumber <- input$anosimPermutations
-  #   metadata <- input$anosimColumn
-  # })
-  # 
-  # output$pValueAnosim <- renderPrint({
-  #   otu <- abundances(compositionalInput())
-  #   meta <- meta(compositionalInput())
-  #   metadata <- input$anosimColumn
-  #   vegan::anosim(otu, meta[[metadata]], permutations = 99, distance = "bray", parallel = getOption("mc.cores"))
-  # })
-  
   
   
   ### RESULTS ###
