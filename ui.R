@@ -295,12 +295,12 @@ ui <- dashboardPage(
     tabItem(
       tabName = "coremicrobiota",
           fixedRow(
-              box( width = "2", collapsible = TRUE,
-                   textInput("detectionMin", label = "Minimum detection threshold (Relative Abundance)", value = "0.0000001"),
-                   bsTooltip("detectionMin", "Lowest detection value on the heatmap. Value must be higher than 0.", "left", options = list(container = "body")),
-                   checkboxInput("transparentCoreHeatmap", "Transparent background", value = TRUE)
-              ),
-                   box(width = 10, div(style = 'overflow-x: scroll', plotlyOutput("coreHeatmap", width = "100%", height = "100%")))
+          #     box( width = "2", collapsible = TRUE,
+          #          textInput("detectionMin", label = "Minimum detection threshold (Relative Abundance)", value = "0.0000001"),
+          #          bsTooltip("detectionMin", "Lowest detection value on the heatmap. Value must be higher than 0.", "left", options = list(container = "body")),
+          #          checkboxInput("transparentCoreHeatmap", "Transparent background", value = TRUE)
+          #     ),
+                   plotlyOutput("coreHeatmap")
             )
         ),
 

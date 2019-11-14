@@ -9,6 +9,8 @@ library(rmarkdown)
 library(DT)
 library(ggplot2)
 library(plotly)
+library(heatmaply)
+library(ComplexHeatmap)
 library(knitr)
 library(dplyr)
 library(ggpubr)
@@ -298,7 +300,7 @@ server <- function(input, output, session) {
     }
     # Filter top X taxa
     if (input$pruneTaxaCheck == TRUE){
-      filterTaxa <- names(sort(taxa_sums(a), decreasing = TRUE)[1:input$pruneTaxa])
+      filterTaxa <- names(sort(taxa_sums(physeq), decreasing = TRUE)[1:input$pruneTaxa])
       physeq <- prune_taxa(filterTaxa, physeq)
     }
     if (input$subsetSamplesCheck == TRUE){
@@ -346,21 +348,48 @@ server <- function(input, output, session) {
 
   ## Core Microbiota ##
 
+  # coreHeatmapParams <- reactive({
+  #   # Core with compositionals:
+  #   detections <- 10^seq(log10(as.numeric(input$detectionMin)), log10(1), length = 10)
+  #   gray <- rev(brewer.pal(5,"Spectral"))
+  #   coreplot <- plot_core(compositionalInput(), plot.type = "heatmap", colours = gray, prevalences = 0, detections = detections) + xlab("Detection Threshold (Relative Abundance)")
+  #   if(input$transparentCoreHeatmap == TRUE){
+  #     coreplot <- coreplot +
+  #       theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
+  #   }
+  #
+  #   ggplotly(coreplot, height = plot_width(compositionalInput(), mult = 10, otu.or.tax = "tax"), width = 900 )
+  # })
   coreHeatmapParams <- reactive({
-    # Core with compositionals:
-    detections <- 10^seq(log10(as.numeric(input$detectionMin)), log10(1), length = 10)
-    gray <- rev(brewer.pal(5,"Spectral"))
-    coreplot <- plot_core(compositionalInput(), plot.type = "heatmap", colours = gray, prevalences = 0, detections = detections) + xlab("Detection Threshold (Relative Abundance)")
-    if(input$transparentCoreHeatmap == TRUE){
-      coreplot <- coreplot +
-        theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
+    if ( input$samplesAreColumns == TRUE ) {
+      if ( nrow(otu_table(datasetInput())) > 1000 ){
+        simpleError("A maximum of 1000 OTUs are permitted. Please filter the dataset and try again.")
+      } else {
+        a <- heatmaply(otu_table(datasetInput()), height = 1060, width = 1060)
+      }
+    } else {
+      if (ncol(otu_table(datasetInput())) > 1000){
+        simpleError("A maximum of 1000 OTUs are permitted. Please filter the dataset and try again.")
+      } else {
+        a <- heatmaply(otu_table(datasetInput()), height = 1060, width = 1060)
+      }
     }
-
-    ggplotly(coreplot, height = plot_width(compositionalInput(), mult = 10, otu.or.tax = "tax"), width = 900 )
+    # if(input$transparentCoreHeatmap == TRUE){
+    # a <- a +
+    #   theme(panel.background = element_rect(fill = "transparent", colour = NA), plot.background = element_rect(fill = "transparent", colour = NA), legend.background = element_rect(fill = "transparent", colour = NA), legend.box.background = element_rect(fill = "transparent", colour = NA))
+    # }
+    return(a)
   })
   output$coreHeatmap <- renderPlotly({
     coreHeatmapParams()
   })
+
+  # coreHeatmapParams <- reactive({
+  #   ComplexHeatmap::Heatmap(as.matrix(data.frame(otu_table(datasetInput()))))
+  # })
+  # output$coreHeatmap <- renderPlot({
+  #   coreHeatmapParams()
+  # })
 
   ## Community Composition ##
 
@@ -400,7 +429,7 @@ server <- function(input, output, session) {
   })
 
   # Abundance of taxa in sample variable by taxa
-  communityPlotParams <- reactive ({ #Filtering the data seems to produce some strange results. The filtering appears to work fine though.
+  communityPlotParams <- reactive ({
     if(input$communityPlotFacetWrap == FALSE){
       compositionplot <- plot_ordered_bar(datasetInput(), x=input$z1, y="Abundance", fill=input$v4, title=paste0("Abundance by ", input$v4, " in ", input$z1))  + geom_bar(stat="identity") + theme_pubr(base_size = 10, margin = TRUE, legend = "right", x.text.angle = 90) + rremove("xlab") + rremove("ylab")
     } else {
