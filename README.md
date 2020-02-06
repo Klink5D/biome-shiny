@@ -1,4 +1,4 @@
-### NOTE: This version of Biome-Shiny is deprecated and only exists for archival purposes. For the version that's currently updated, please go to https://github.com/Biodata-PT/Biome-Shiny
+##### NOTE: This version of Biome-Shiny is deprecated and only exists for archival purposes. For the version that's currently updated, please go to https://github.com/Biodata-PT/Biome-Shiny
 
 # Biome-shiny
 ##  A Shiny R app for microbiome visualization, built around the "microbiome" package
